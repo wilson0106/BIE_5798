@@ -2,9 +2,9 @@
 title: "BIE5798"
 author: "Wilson de Oliveira Souza"
 output:
-  pdf_document: default
   html_document:
     df_print: paged
+  pdf_document: default
 ---
 
 Lendo pacotes necessários para lidar com o dados
@@ -28,9 +28,14 @@ head(data, n = 10)
 ```
 
 
-Resumo ds dados
+Resumo dos dados
 
-```{r}
+```{r RESUMO DOS DADOS}
+data$pred <- as.factor(data$pred)
+
 summary(data)
+
+levels(data$pred)
 ```
+
 

@@ -1642,12 +1642,24 @@ head(data, n = 10)</code></pre>
 {"columns":[{"label":["names"],"name":[1],"type":["chr"],"align":["left"]},{"label":["pred"],"name":[2],"type":["chr"],"align":["left"]}],"data":[{"1":"2021-06-27_10_35_13.066_3460_923.png","2":"coscinodiscus"},{"1":"2021-06-27_14_05_51.211_997_305.png","2":"coscinodiscus"},{"1":"2021-06-29_16_13_35.335_3696_2164.png","2":"coscinodiscus"},{"1":"2021-06-29_21_14_21.670_1988_852.png","2":"coscinodiscus"},{"1":"2021-06-26_15_01_51.881_3141_827.png","2":"coscinodiscus"},{"1":"2021-06-14_21_14_23.207_1620_2742.png","2":"coscinodiscus"},{"1":"2021-06-23_03_50_55.718_3210_896.png","2":"coscinodiscus"},{"1":"2021-06-26_15_33_56.993_2732_2619.png","2":"coscinodiscus"},{"1":"2021-06-26_02_32_28.667_1018_15.png","2":"coscinodiscus"},{"1":"2021-06-24_13_26_11.072_3135_2518.png","2":"coscinodiscus"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
   </script>
 </div>
-<p>Resumo ds dados</p>
-<pre class="r"><code>summary(data)</code></pre>
-<pre><code>##     names               pred          
-##  Length:49999       Length:49999      
-##  Class :character   Class :character  
-##  Mode  :character   Mode  :character</code></pre>
+<p>Resumo dos dados</p>
+<pre class="r"><code>data$pred &lt;- as.factor(data$pred)
+
+summary(data)</code></pre>
+<pre><code>##     names                                      pred        
+##  Length:5121468     coscinodiscus                :4640103  
+##  Class :character   sombra                       : 190829  
+##  Mode  :character   hemidiscus                   :  89231  
+##                     compl_guinardia_dactyliosolen:  47663  
+##                     compl_rhizosolenia_proboscia :  45719  
+##                     detritos                     :  37376  
+##                     (Other)                      :  70547</code></pre>
+<pre class="r"><code>levels(data$pred)</code></pre>
+<pre><code>## [1] &quot;chaetoceros&quot;                   &quot;compl_guinardia_dactyliosolen&quot;
+## [3] &quot;compl_rhizosolenia_proboscia&quot;  &quot;coscinodiscus&quot;                
+## [5] &quot;detritos&quot;                      &quot;guinardia_striata&quot;            
+## [7] &quot;hemidiscus&quot;                    &quot;rhizosolenia_robusta&quot;         
+## [9] &quot;sombra&quot;</code></pre>
 
 
 
