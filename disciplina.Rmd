@@ -7,8 +7,7 @@ output:
 ---
 
 Lendo pacotes necessários para lidar com o dados
- asda
- 
+
 ```{r PACOTES, warning =  FALSE, message = FALSE}
 library(data.table)
 library(tidyverse)
@@ -17,11 +16,15 @@ library(hms)
 library(here)
 ```
 
+
 Definindo ambiente dos dados e lendo os dados
 
 ```{r DATA, warning =  FALSE}
-path <- here::here("data", "raw", "2021_06_fito.csv")
+path <- here::here("data", "raw", "2021_06_fito_part.csv") # Parte do arquivo completo, pois o completo possui mais de 200MB e não está upado no github.
 data <- fread(path)
 
 head(data)
 ```
+
+
+
