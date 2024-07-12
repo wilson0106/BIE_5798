@@ -21,11 +21,16 @@ library(here)
 Definindo ambiente dos dados e lendo os dados
 
 ```{r DATA, warning =  FALSE}
-path <- here::here("data", "raw", "2021_06_fito_part.csv") # Parte do arquivo completo, pois o completo possui mais de 200MB e não está upado no github.
+path <- here::here("data", "raw", "2021_06_fito.csv") # Para usar o arquivo exemplo upado no github, utilize o arquivo "2021_06_fito_part.csv", pois o arquivo original possui +250MB
 data <- fread(path)
 
-head(data)
+head(data, n = 10)
 ```
 
 
+Resumo ds dados
+
+```{r}
+summary(data)
+```
 
