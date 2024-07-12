@@ -1,0 +1,25 @@
+---
+title: "BIE5798"
+author: "Wilson de Oliveira Souza"
+output: word_document
+---
+
+Lendo pacotes necessários para lidar com o dados
+ asda
+ 
+```{r PACOTES, warning =  FALSE, message = FALSE}
+library(data.table)
+library(tidyverse)
+library(lubridate)
+library(hms)
+library(here)
+```
+
+Definindo ambiente dos dados e lendo os dados
+
+```{r DATA, warning =  FALSE}
+path <- here::here("data", "raw", "2021_06_fito.csv")
+data <- fread(path)
+
+head(data)
+```
