@@ -1,7 +1,9 @@
 ---
 title: "BIE5798"
 author: "Wilson de Oliveira Souza"
-output: word_document
+output:
+  html_document:
+    df_print: paged
 ---
 
 Lendo pacotes necessários para lidar com o dados
