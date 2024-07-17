@@ -81,6 +81,150 @@ path <- here::here("data", "processed", "2021_06_fito_processed.csv")
 data <- fwrite(df_full, path)
 ```
 
+## Organizando os dados
+
+Aqui os dados de data e horário serão formatados
+
+```{r ORGANIZANDO OS DADOS}
+# Criando colunas data e hora
+df <- data %>%
+  as_tibble() %>% 
+  transmute(class = pred, date_time = str_sub(names, 1, 23) %>% ymd_hms()) %>%
+  mutate(cycle_rounded = round_date(date_time, "1 hour"))
+
+# Contabilizando dados por classe agrupados por data e hora
+df <- df %>% 
+  dplyr::group_by(class, 
+                  cycle_rounded = round_date(cycle_rounded, "1 hour")) %>%
+  dplyr::summarize(n = n()) %>% 
+  dplyr::ungroup() %>% 
+  print()
+
+# Reordenando colunas e substituindo NA por 0, pois neste momento o ciclo existe, mas a classe no ciclo pode não existir
+df <- df %>% 
+  tidyr::pivot_wider(names_from = class, values_from = n)
+df[is.na(df)] <- 0
+
+# Criando colunas para todos os ciclos (horários) existentes
+cycles <- tibble(cycle_rounded = seq(ymd_hm("2021-06-01 00:00"),
+                                     ymd_hm("2021-06-30 23:59"),
+                                     by = "1 hour"))
+
+# Unindo todos os ciclos com os ciclos obtidos
+df_full <- dplyr::full_join(cycles, df)
+```
+
+## Salvando dados organizados
+
+```{r SALVANDO DADOS}
+path <- here::here("data", "processed", "2021_06_fito_processed.csv")
+data <- fwrite(df_full, path)
+```
+
+
+## Resumo dos dados processados
+
+Aqui os dados serão resumidos considerando a data, hora e as classes.
+
+
+```{r RESUMO NUMÉRICO DOS DADOS PROCESSADOS}
+
+```
+
+
+```{r RESUMO GRÁFICO DOS DADOS PROCESSADOS, warning = FALSE}
+
+plot_summary <- function(classe = df_full$chaetoceros, 
+                         ylab = "Total Chaetoceros/hour",
+                         xlab = "Date",
+                         xbreak = "3 days",
+                         titulo = "chaetoceros") {
+  
+  lims <- as.POSIXct(strptime(c("2021-06-01 00:00",
+                                "2021-06-30 00:00"),
+                              format = "%Y-%m-%d %H:%M"))
+  
+  ggplot(data = df_full) +
+    geom_point(aes(x = cycle_rounded, y = classe),
+               col = "red", size = 1) +
+    geom_line(aes(x = cycle_rounded, y = classe),
+              col = "black", linewidth = .5) +
+    scale_x_datetime(breaks = xbreak) +
+    labs(x = xlab, y = ylab,
+         title = toupper(titulo)) +
+    theme_test() +
+    theme(axis.text.x = element_text(size = 15, face = "bold",
+                                     family = "Times New Roman",
+                                     angle = 45, hjust = 1,
+                                     vjust = 1, color = "black"),
+          axis.text.y = element_text(size = 15, face = "bold",
+                                     family = "Times New Roman",
+                                     color = "black"),
+          axis.title.x = element_text(size = 16, face = "bold",
+                                      family = "Times New Roman",
+                                      color = "black"),
+          axis.title.y = element_text(size = 16, face = "bold",
+                                      family = "Times New Roman",
+                                      color = "black"))
+  
+}
+
+plot_summary()
+
+```
+
+
+## Análise espectral dos dados
+
+Aqui é realizado uma análise espectral simples.
+
+```{r ANÁLISE ESPECTRAL, warning = FALSE}
+names(df_full)
+
+# Cria dataframe com a classe especificada
+df_classe <- df_full %>% 
+  select(cycle_rounded, chaetoceros)
+
+# Preenche NA's com o último valor observado - análise espectral não funciona com NA
+# Há inúmeras formas de preencher esses NA's, essa é a mais simples
+df_classe <- df_classe %>% 
+  tidyr::fill(chaetoceros, .direction = "down")
+
+# Espectro com remoção da tendência
+resultado <- spectrum(I(df_classe$chaetoceros - mean(df_classe$chaetoceros)),
+                      span = c(3, 3, 3, 3), 
+                      log = c("no"), plot = F)
+
+# Extração das frequências em uHz (X) e da variância do espectro (Y)
+x <- resultado$freq / (3.6/1000)
+y <- 2 * resultado$spec
+
+# Plot
+ggplot() +
+  geom_line(aes(x = x, y = y), size = 1) +
+  geom_point(aes(x = x, y = y), col = "black", size = .03) +
+  scale_x_continuous(n.breaks = 10) +
+  labs(x = "Frequency uHz") +
+  theme_test() +
+  theme(axis.text.x = element_text(size = 12, face = "bold", 
+                                   family = "Times New Roman",
+                                   color = "black"),
+        axis.text.y = element_text(size = 12, face = "bold", 
+                                   family = "Times New Roman",
+                                   color = "black"),
+        axis.title.x = element_text(size = 16, face = "bold",
+                                    family = "Times New Roman",
+                                    color = "black"),
+        axis.title.y = element_text(size = 16, face = "bold",
+                                    family = "Times New Roman",
+                                    color = "black"), 
+        strip.text = element_text(size = 14, face = "bold", 
+                                  family = "Times New Roman",
+                                  color = "black"))
+
+```
+
+
 
 ## Resumo dos dados processados
 
