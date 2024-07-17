@@ -3,9 +3,9 @@ title: "Disciplina BIE5798: Boas práticas e ferramentas da Ciência Aberta na e
 author: "Wilson de Oliveira Souza"
 date: "`r Sys.Date()`"
 output:
-  pdf_document: default
   html_document:
     df_print: paged
+  pdf_document: default
 ---
 
 ## Lendo pacotes necessários para lidar com o dados
