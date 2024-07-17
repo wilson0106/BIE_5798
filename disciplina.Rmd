@@ -1,10 +1,11 @@
 ---
 title: "Disciplina BIE5798: Boas práticas e ferramentas da Ciência Aberta na ecologia"
 author: "Wilson de Oliveira Souza"
+date: "`r Sys.Date()`"
 output:
+  pdf_document: default
   html_document:
     df_print: paged
-  pdf_document: default
 ---
 
 ## Lendo pacotes necessários para lidar com o dados
@@ -15,6 +16,7 @@ library(tidyverse)
 library(lubridate)
 library(hms)
 library(here)
+library(kableExtra)
 ```
 
 ## Definindo ambiente dos dados e lendo os dados
@@ -29,18 +31,21 @@ head(data, n = 10)
 ## Resumo dos dados brutos
 
 ```{r RESUMO DOS DADOS BRUTOS, warning = FALSE}
+# Definindo a coluna pred como fator
 data$pred <- as.factor(data$pred)
 
-summary(data)
-
-levels(data$pred)
+# Resumo por classe
+(classe_cont <- data %>%
+  dplyr::group_by(pred) %>%
+  dplyr::summarize(N_classes = n())) %>% 
+  dplyr::arrange(N_classes)
 ```
 
 ## Organizando os dados
 
 Aqui os dados de data e horário serão formatados
 
-```{r ORGANIZANDO OS DADOS, warning = FALSE}
+```{r ORGANIZANDO OS DADOS, warning = FALSE, message = FALSE, results = 'hide'}
 # Criando colunas data e hora
 df <- data %>%
   as_tibble() %>% 
@@ -51,7 +56,7 @@ df <- data %>%
 df <- df %>% 
   dplyr::group_by(class, 
                   cycle_rounded = round_date(cycle_rounded, "1 hour")) %>%
-  dplyr::summarize(n = n()) %>% 
+  dplyr::summarize(n = n() %>% as.integer()) %>% 
   dplyr::ungroup() %>% 
   print()
 
@@ -82,13 +87,26 @@ data <- fwrite(df_full, path)
 Aqui os dados serão resumidos considerando a data, hora e as classes.
 
 
-```{r RESUMO NUMÉRICO DOS DADOS PROCESSADOS}
+```{r RESUMO NUMÉRICO DOS DADOS PROCESSADOS, warning = FALSE, message = FALSE}
+# Resumo dados por dia para cada classe
+df_resumo <- df_full %>% 
+  pivot_longer(!cycle_rounded,
+               names_to = "classes", values_to = "N") %>% 
+  dplyr::group_by(classes,
+                  dia = lubridate::day(cycle_rounded) %>% as.factor()) %>%
+  dplyr::summarize(`média` = round(mean(N, na.rm = T), 3),
+                   mediana = round(median(N, na.rm = T), 0),
+                   `desvio padrão` = round(sd(N, na.rm = T), 3),
+                   `variância` = round(var(N, na.rm = T), 3),
+                   `mínimo` = round(min(N, na.rm = T), 0),
+                   `máximo` = round(max(N, na.rm = T), 0),
+                   N = sum(N, na.rm = T))
 
+df_resumo %>% kable()
 ```
 
 
 ```{r RESUMO GRÁFICO DOS DADOS PROCESSADOS, warning = FALSE}
-
 plot_summary <- function(classe = df_full$chaetoceros, 
                          ylab = "Total Chaetoceros/hour",
                          xlab = "Date",
@@ -109,17 +127,13 @@ plot_summary <- function(classe = df_full$chaetoceros,
          title = toupper(titulo)) +
     theme_test() +
     theme(axis.text.x = element_text(size = 15, face = "bold",
-                                     family = "Times New Roman",
                                      angle = 45, hjust = 1,
                                      vjust = 1, color = "black"),
           axis.text.y = element_text(size = 15, face = "bold",
-                                     family = "Times New Roman",
                                      color = "black"),
           axis.title.x = element_text(size = 16, face = "bold",
-                                      family = "Times New Roman",
                                       color = "black"),
           axis.title.y = element_text(size = 16, face = "bold",
-                                      family = "Times New Roman",
                                       color = "black"))
   
 }
@@ -138,20 +152,21 @@ names(df_full)
 
 # Cria dataframe com a classe especificada
 df_classe <- df_full %>% 
-  select(cycle_rounded, chaetoceros)
+  dplyr::filter()
 
 # Preenche NA's com o último valor observado - análise espectral não funciona com NA
 # Há inúmeras formas de preencher esses NA's, essa é a mais simples
 df_classe <- df_classe %>% 
   tidyr::fill(chaetoceros, .direction = "down")
 
-# Espectro com remoção da tendência
+# Espectro com remoção da tendência - span consiste em suavização do espectro
 resultado <- spectrum(I(df_classe$chaetoceros - mean(df_classe$chaetoceros)),
                       span = c(3, 3, 3, 3), 
-                      log = c("no"), plot = F)
+                      log = c("no"),
+                      plot = F)
 
 # Extração das frequências em uHz (X) e da variância do espectro (Y)
-x <- resultado$freq / (3.6/1000)
+x <- resultado$freq / (3.6 / 1000)
 y <- 2 * resultado$spec
 
 # Plot
@@ -162,22 +177,14 @@ ggplot() +
   labs(x = "Frequency uHz") +
   theme_test() +
   theme(axis.text.x = element_text(size = 12, face = "bold", 
-                                   family = "Times New Roman",
                                    color = "black"),
         axis.text.y = element_text(size = 12, face = "bold", 
-                                   family = "Times New Roman",
                                    color = "black"),
         axis.title.x = element_text(size = 16, face = "bold",
-                                    family = "Times New Roman",
                                     color = "black"),
         axis.title.y = element_text(size = 16, face = "bold",
-                                    family = "Times New Roman",
                                     color = "black"), 
         strip.text = element_text(size = 14, face = "bold", 
-                                  family = "Times New Roman",
                                   color = "black"))
 
 ```
-
-
-

@@ -11,6 +11,7 @@
 
 <meta name="author" content="Wilson de Oliveira Souza" />
 
+<meta name="date" content="2024-07-17" />
 
 <title>Disciplina BIE5798: Boas práticas e ferramentas da Ciência Aberta na ecologia</title>
 
@@ -1623,6 +1624,7 @@ display: none;
 <h1 class="title toc-ignore">Disciplina BIE5798: Boas práticas e
 ferramentas da Ciência Aberta na ecologia</h1>
 <h4 class="author">Wilson de Oliveira Souza</h4>
+<h4 class="date">2024-07-17</h4>
 
 </div>
 
@@ -1633,7 +1635,8 @@ ferramentas da Ciência Aberta na ecologia</h1>
 library(tidyverse)
 library(lubridate)
 library(hms)
-library(here)</code></pre>
+library(here)
+library(kableExtra)</code></pre>
 </div>
 <div id="definindo-ambiente-dos-dados-e-lendo-os-dados" class="section level2">
 <h2>Definindo ambiente dos dados e lendo os dados</h2>
@@ -1649,23 +1652,19 @@ head(data, n = 10)</code></pre>
 </div>
 <div id="resumo-dos-dados-brutos" class="section level2">
 <h2>Resumo dos dados brutos</h2>
-<pre class="r"><code>data$pred &lt;- as.factor(data$pred)
+<pre class="r"><code># Definindo a coluna pred como fator
+data$pred &lt;- as.factor(data$pred)
 
-summary(data)</code></pre>
-<pre><code>##     names                                      pred        
-##  Length:5121468     coscinodiscus                :4640103  
-##  Class :character   sombra                       : 190829  
-##  Mode  :character   hemidiscus                   :  89231  
-##                     compl_guinardia_dactyliosolen:  47663  
-##                     compl_rhizosolenia_proboscia :  45719  
-##                     detritos                     :  37376  
-##                     (Other)                      :  70547</code></pre>
-<pre class="r"><code>levels(data$pred)</code></pre>
-<pre><code>## [1] &quot;chaetoceros&quot;                   &quot;compl_guinardia_dactyliosolen&quot;
-## [3] &quot;compl_rhizosolenia_proboscia&quot;  &quot;coscinodiscus&quot;                
-## [5] &quot;detritos&quot;                      &quot;guinardia_striata&quot;            
-## [7] &quot;hemidiscus&quot;                    &quot;rhizosolenia_robusta&quot;         
-## [9] &quot;sombra&quot;</code></pre>
+# Resumo por classe
+(classe_cont &lt;- data %&gt;%
+  dplyr::group_by(pred) %&gt;%
+  dplyr::summarize(N_classes = n())) %&gt;% 
+  dplyr::arrange(N_classes)</code></pre>
+<div data-pagedtable="false">
+<script data-pagedtable-source type="application/json">
+{"columns":[{"label":["pred"],"name":[1],"type":["fct"],"align":["left"]},{"label":["N_classes"],"name":[2],"type":["int"],"align":["right"]}],"data":[{"1":"guinardia_striata","2":"13442"},{"1":"chaetoceros","2":"21275"},{"1":"rhizosolenia_robusta","2":"35830"},{"1":"detritos","2":"37376"},{"1":"compl_rhizosolenia_proboscia","2":"45719"},{"1":"compl_guinardia_dactyliosolen","2":"47663"},{"1":"hemidiscus","2":"89231"},{"1":"sombra","2":"190829"},{"1":"coscinodiscus","2":"4640103"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+  </script>
+</div>
 </div>
 <div id="organizando-os-dados" class="section level2">
 <h2>Organizando os dados</h2>
@@ -1680,26 +1679,11 @@ df &lt;- data %&gt;%
 df &lt;- df %&gt;% 
   dplyr::group_by(class, 
                   cycle_rounded = round_date(cycle_rounded, &quot;1 hour&quot;)) %&gt;%
-  dplyr::summarize(n = n()) %&gt;% 
+  dplyr::summarize(n = n() %&gt;% as.integer()) %&gt;% 
   dplyr::ungroup() %&gt;% 
-  print()</code></pre>
-<pre><code>## `summarise()` has grouped output by &#39;class&#39;. You can override using the
-## `.groups` argument.</code></pre>
-<pre><code>## # A tibble: 6,471 × 3
-##    class       cycle_rounded           n
-##    &lt;fct&gt;       &lt;dttm&gt;              &lt;int&gt;
-##  1 chaetoceros 2021-06-01 00:00:00     4
-##  2 chaetoceros 2021-06-01 01:00:00     5
-##  3 chaetoceros 2021-06-01 02:00:00    18
-##  4 chaetoceros 2021-06-01 03:00:00    21
-##  5 chaetoceros 2021-06-01 04:00:00    12
-##  6 chaetoceros 2021-06-01 05:00:00    16
-##  7 chaetoceros 2021-06-01 06:00:00    24
-##  8 chaetoceros 2021-06-01 07:00:00    18
-##  9 chaetoceros 2021-06-01 08:00:00    14
-## 10 chaetoceros 2021-06-01 09:00:00    13
-## # ℹ 6,461 more rows</code></pre>
-<pre class="r"><code># Reordenando colunas e substituindo NA por 0, pois neste momento o ciclo existe, mas a classe no ciclo pode não existir
+  print()
+
+# Reordenando colunas e substituindo NA por 0, pois neste momento o ciclo existe, mas a classe no ciclo pode não existir
 df &lt;- df %&gt;% 
   tidyr::pivot_wider(names_from = class, values_from = n)
 df[is.na(df)] &lt;- 0
@@ -1711,7 +1695,6 @@ cycles &lt;- tibble(cycle_rounded = seq(ymd_hm(&quot;2021-06-01 00:00&quot;),
 
 # Unindo todos os ciclos com os ciclos obtidos
 df_full &lt;- dplyr::full_join(cycles, df)</code></pre>
-<pre><code>## Joining with `by = join_by(cycle_rounded)`</code></pre>
 </div>
 <div id="salvando-dados-organizados" class="section level2">
 <h2>Salvando dados organizados</h2>
@@ -1722,6 +1705,3019 @@ data &lt;- fwrite(df_full, path)</code></pre>
 <h2>Resumo dos dados processados</h2>
 <p>Aqui os dados serão resumidos considerando a data, hora e as
 classes.</p>
+<pre class="r"><code># Resumo dados por dia para cada classe
+df_resumo &lt;- df_full %&gt;% 
+  pivot_longer(!cycle_rounded,
+               names_to = &quot;classes&quot;, values_to = &quot;N&quot;) %&gt;% 
+  dplyr::group_by(classes,
+                  dia = lubridate::day(cycle_rounded) %&gt;% as.factor()) %&gt;%
+  dplyr::summarize(`média` = round(mean(N, na.rm = T), 3),
+                   mediana = round(median(N, na.rm = T), 0),
+                   `desvio padrão` = round(sd(N, na.rm = T), 3),
+                   `variância` = round(var(N, na.rm = T), 3),
+                   `mínimo` = round(min(N, na.rm = T), 0),
+                   `máximo` = round(max(N, na.rm = T), 0),
+                   N = sum(N, na.rm = T))
+
+df_resumo %&gt;% kable()</code></pre>
+<table>
+<colgroup>
+<col width="30%" />
+<col width="4%" />
+<col width="10%" />
+<col width="8%" />
+<col width="14%" />
+<col width="13%" />
+<col width="7%" />
+<col width="7%" />
+<col width="7%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">classes</th>
+<th align="left">dia</th>
+<th align="right">média</th>
+<th align="right">mediana</th>
+<th align="right">desvio padrão</th>
+<th align="right">variância</th>
+<th align="right">mínimo</th>
+<th align="right">máximo</th>
+<th align="right">N</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">chaetoceros</td>
+<td align="left">1</td>
+<td align="right">16.240</td>
+<td align="right">16</td>
+<td align="right">7.785</td>
+<td align="right">60.607</td>
+<td align="right">4</td>
+<td align="right">31</td>
+<td align="right">406</td>
+</tr>
+<tr class="even">
+<td align="left">chaetoceros</td>
+<td align="left">2</td>
+<td align="right">15.292</td>
+<td align="right">12</td>
+<td align="right">17.046</td>
+<td align="right">290.563</td>
+<td align="right">3</td>
+<td align="right">91</td>
+<td align="right">367</td>
+</tr>
+<tr class="odd">
+<td align="left">chaetoceros</td>
+<td align="left">3</td>
+<td align="right">19.409</td>
+<td align="right">16</td>
+<td align="right">15.960</td>
+<td align="right">254.729</td>
+<td align="right">4</td>
+<td align="right">71</td>
+<td align="right">427</td>
+</tr>
+<tr class="even">
+<td align="left">chaetoceros</td>
+<td align="left">4</td>
+<td align="right">25.125</td>
+<td align="right">19</td>
+<td align="right">16.456</td>
+<td align="right">270.810</td>
+<td align="right">5</td>
+<td align="right">74</td>
+<td align="right">603</td>
+</tr>
+<tr class="odd">
+<td align="left">chaetoceros</td>
+<td align="left">5</td>
+<td align="right">26.042</td>
+<td align="right">24</td>
+<td align="right">12.418</td>
+<td align="right">154.216</td>
+<td align="right">5</td>
+<td align="right">54</td>
+<td align="right">625</td>
+</tr>
+<tr class="even">
+<td align="left">chaetoceros</td>
+<td align="left">6</td>
+<td align="right">29.208</td>
+<td align="right">27</td>
+<td align="right">10.529</td>
+<td align="right">110.868</td>
+<td align="right">15</td>
+<td align="right">57</td>
+<td align="right">701</td>
+</tr>
+<tr class="odd">
+<td align="left">chaetoceros</td>
+<td align="left">7</td>
+<td align="right">32.167</td>
+<td align="right">31</td>
+<td align="right">13.605</td>
+<td align="right">185.101</td>
+<td align="right">10</td>
+<td align="right">62</td>
+<td align="right">772</td>
+</tr>
+<tr class="even">
+<td align="left">chaetoceros</td>
+<td align="left">8</td>
+<td align="right">33.375</td>
+<td align="right">30</td>
+<td align="right">14.702</td>
+<td align="right">216.158</td>
+<td align="right">8</td>
+<td align="right">60</td>
+<td align="right">801</td>
+</tr>
+<tr class="odd">
+<td align="left">chaetoceros</td>
+<td align="left">9</td>
+<td align="right">28.958</td>
+<td align="right">31</td>
+<td align="right">13.353</td>
+<td align="right">178.303</td>
+<td align="right">10</td>
+<td align="right">57</td>
+<td align="right">695</td>
+</tr>
+<tr class="even">
+<td align="left">chaetoceros</td>
+<td align="left">10</td>
+<td align="right">28.958</td>
+<td align="right">25</td>
+<td align="right">15.069</td>
+<td align="right">227.085</td>
+<td align="right">8</td>
+<td align="right">68</td>
+<td align="right">695</td>
+</tr>
+<tr class="odd">
+<td align="left">chaetoceros</td>
+<td align="left">11</td>
+<td align="right">35.625</td>
+<td align="right">36</td>
+<td align="right">13.223</td>
+<td align="right">174.853</td>
+<td align="right">8</td>
+<td align="right">62</td>
+<td align="right">855</td>
+</tr>
+<tr class="even">
+<td align="left">chaetoceros</td>
+<td align="left">12</td>
+<td align="right">35.542</td>
+<td align="right">32</td>
+<td align="right">17.619</td>
+<td align="right">310.433</td>
+<td align="right">6</td>
+<td align="right">80</td>
+<td align="right">853</td>
+</tr>
+<tr class="odd">
+<td align="left">chaetoceros</td>
+<td align="left">13</td>
+<td align="right">32.125</td>
+<td align="right">32</td>
+<td align="right">17.195</td>
+<td align="right">295.679</td>
+<td align="right">9</td>
+<td align="right">90</td>
+<td align="right">771</td>
+</tr>
+<tr class="even">
+<td align="left">chaetoceros</td>
+<td align="left">14</td>
+<td align="right">32.167</td>
+<td align="right">30</td>
+<td align="right">10.573</td>
+<td align="right">111.797</td>
+<td align="right">13</td>
+<td align="right">59</td>
+<td align="right">772</td>
+</tr>
+<tr class="odd">
+<td align="left">chaetoceros</td>
+<td align="left">15</td>
+<td align="right">23.500</td>
+<td align="right">22</td>
+<td align="right">11.026</td>
+<td align="right">121.565</td>
+<td align="right">7</td>
+<td align="right">65</td>
+<td align="right">564</td>
+</tr>
+<tr class="even">
+<td align="left">chaetoceros</td>
+<td align="left">16</td>
+<td align="right">73.542</td>
+<td align="right">57</td>
+<td align="right">52.461</td>
+<td align="right">2752.172</td>
+<td align="right">13</td>
+<td align="right">178</td>
+<td align="right">1765</td>
+</tr>
+<tr class="odd">
+<td align="left">chaetoceros</td>
+<td align="left">17</td>
+<td align="right">64.042</td>
+<td align="right">60</td>
+<td align="right">22.619</td>
+<td align="right">511.607</td>
+<td align="right">36</td>
+<td align="right">109</td>
+<td align="right">1537</td>
+</tr>
+<tr class="even">
+<td align="left">chaetoceros</td>
+<td align="left">18</td>
+<td align="right">37.250</td>
+<td align="right">36</td>
+<td align="right">13.684</td>
+<td align="right">187.239</td>
+<td align="right">18</td>
+<td align="right">74</td>
+<td align="right">894</td>
+</tr>
+<tr class="odd">
+<td align="left">chaetoceros</td>
+<td align="left">19</td>
+<td align="right">32.625</td>
+<td align="right">34</td>
+<td align="right">9.929</td>
+<td align="right">98.592</td>
+<td align="right">17</td>
+<td align="right">55</td>
+<td align="right">783</td>
+</tr>
+<tr class="even">
+<td align="left">chaetoceros</td>
+<td align="left">20</td>
+<td align="right">32.333</td>
+<td align="right">28</td>
+<td align="right">17.357</td>
+<td align="right">301.275</td>
+<td align="right">15</td>
+<td align="right">92</td>
+<td align="right">776</td>
+</tr>
+<tr class="odd">
+<td align="left">chaetoceros</td>
+<td align="left">21</td>
+<td align="right">21.375</td>
+<td align="right">17</td>
+<td align="right">13.180</td>
+<td align="right">173.723</td>
+<td align="right">10</td>
+<td align="right">68</td>
+<td align="right">513</td>
+</tr>
+<tr class="even">
+<td align="left">chaetoceros</td>
+<td align="left">22</td>
+<td align="right">13.917</td>
+<td align="right">14</td>
+<td align="right">5.725</td>
+<td align="right">32.775</td>
+<td align="right">4</td>
+<td align="right">24</td>
+<td align="right">334</td>
+</tr>
+<tr class="odd">
+<td align="left">chaetoceros</td>
+<td align="left">23</td>
+<td align="right">18.542</td>
+<td align="right">16</td>
+<td align="right">6.534</td>
+<td align="right">42.694</td>
+<td align="right">6</td>
+<td align="right">33</td>
+<td align="right">445</td>
+</tr>
+<tr class="even">
+<td align="left">chaetoceros</td>
+<td align="left">24</td>
+<td align="right">27.042</td>
+<td align="right">20</td>
+<td align="right">18.224</td>
+<td align="right">332.129</td>
+<td align="right">12</td>
+<td align="right">91</td>
+<td align="right">649</td>
+</tr>
+<tr class="odd">
+<td align="left">chaetoceros</td>
+<td align="left">25</td>
+<td align="right">23.292</td>
+<td align="right">24</td>
+<td align="right">6.389</td>
+<td align="right">40.824</td>
+<td align="right">10</td>
+<td align="right">36</td>
+<td align="right">559</td>
+</tr>
+<tr class="even">
+<td align="left">chaetoceros</td>
+<td align="left">26</td>
+<td align="right">24.583</td>
+<td align="right">24</td>
+<td align="right">8.667</td>
+<td align="right">75.123</td>
+<td align="right">12</td>
+<td align="right">41</td>
+<td align="right">590</td>
+</tr>
+<tr class="odd">
+<td align="left">chaetoceros</td>
+<td align="left">27</td>
+<td align="right">39.250</td>
+<td align="right">35</td>
+<td align="right">23.079</td>
+<td align="right">532.630</td>
+<td align="right">11</td>
+<td align="right">100</td>
+<td align="right">942</td>
+</tr>
+<tr class="even">
+<td align="left">chaetoceros</td>
+<td align="left">28</td>
+<td align="right">28.917</td>
+<td align="right">28</td>
+<td align="right">7.569</td>
+<td align="right">57.297</td>
+<td align="right">17</td>
+<td align="right">48</td>
+<td align="right">694</td>
+</tr>
+<tr class="odd">
+<td align="left">chaetoceros</td>
+<td align="left">29</td>
+<td align="right">21.292</td>
+<td align="right">19</td>
+<td align="right">8.932</td>
+<td align="right">79.781</td>
+<td align="right">6</td>
+<td align="right">43</td>
+<td align="right">511</td>
+</tr>
+<tr class="even">
+<td align="left">chaetoceros</td>
+<td align="left">30</td>
+<td align="right">15.667</td>
+<td align="right">15</td>
+<td align="right">5.858</td>
+<td align="right">34.319</td>
+<td align="right">6</td>
+<td align="right">32</td>
+<td align="right">376</td>
+</tr>
+<tr class="odd">
+<td align="left">compl_guinardia_dactyliosolen</td>
+<td align="left">1</td>
+<td align="right">32.640</td>
+<td align="right">29</td>
+<td align="right">16.464</td>
+<td align="right">271.073</td>
+<td align="right">12</td>
+<td align="right">87</td>
+<td align="right">816</td>
+</tr>
+<tr class="even">
+<td align="left">compl_guinardia_dactyliosolen</td>
+<td align="left">2</td>
+<td align="right">23.375</td>
+<td align="right">20</td>
+<td align="right">10.668</td>
+<td align="right">113.810</td>
+<td align="right">11</td>
+<td align="right">51</td>
+<td align="right">561</td>
+</tr>
+<tr class="odd">
+<td align="left">compl_guinardia_dactyliosolen</td>
+<td align="left">3</td>
+<td align="right">22.455</td>
+<td align="right">22</td>
+<td align="right">11.156</td>
+<td align="right">124.450</td>
+<td align="right">4</td>
+<td align="right">54</td>
+<td align="right">494</td>
+</tr>
+<tr class="even">
+<td align="left">compl_guinardia_dactyliosolen</td>
+<td align="left">4</td>
+<td align="right">24.208</td>
+<td align="right">24</td>
+<td align="right">10.384</td>
+<td align="right">107.824</td>
+<td align="right">9</td>
+<td align="right">48</td>
+<td align="right">581</td>
+</tr>
+<tr class="odd">
+<td align="left">compl_guinardia_dactyliosolen</td>
+<td align="left">5</td>
+<td align="right">25.833</td>
+<td align="right">28</td>
+<td align="right">8.095</td>
+<td align="right">65.536</td>
+<td align="right">7</td>
+<td align="right">38</td>
+<td align="right">620</td>
+</tr>
+<tr class="even">
+<td align="left">compl_guinardia_dactyliosolen</td>
+<td align="left">6</td>
+<td align="right">30.083</td>
+<td align="right">32</td>
+<td align="right">6.338</td>
+<td align="right">40.167</td>
+<td align="right">13</td>
+<td align="right">39</td>
+<td align="right">722</td>
+</tr>
+<tr class="odd">
+<td align="left">compl_guinardia_dactyliosolen</td>
+<td align="left">7</td>
+<td align="right">80.208</td>
+<td align="right">78</td>
+<td align="right">40.977</td>
+<td align="right">1679.129</td>
+<td align="right">17</td>
+<td align="right">157</td>
+<td align="right">1925</td>
+</tr>
+<tr class="even">
+<td align="left">compl_guinardia_dactyliosolen</td>
+<td align="left">8</td>
+<td align="right">60.917</td>
+<td align="right">54</td>
+<td align="right">29.345</td>
+<td align="right">861.123</td>
+<td align="right">18</td>
+<td align="right">118</td>
+<td align="right">1462</td>
+</tr>
+<tr class="odd">
+<td align="left">compl_guinardia_dactyliosolen</td>
+<td align="left">9</td>
+<td align="right">39.042</td>
+<td align="right">36</td>
+<td align="right">15.941</td>
+<td align="right">254.129</td>
+<td align="right">13</td>
+<td align="right">68</td>
+<td align="right">937</td>
+</tr>
+<tr class="even">
+<td align="left">compl_guinardia_dactyliosolen</td>
+<td align="left">10</td>
+<td align="right">36.000</td>
+<td align="right">35</td>
+<td align="right">12.728</td>
+<td align="right">162.000</td>
+<td align="right">16</td>
+<td align="right">62</td>
+<td align="right">864</td>
+</tr>
+<tr class="odd">
+<td align="left">compl_guinardia_dactyliosolen</td>
+<td align="left">11</td>
+<td align="right">42.792</td>
+<td align="right">45</td>
+<td align="right">15.601</td>
+<td align="right">243.389</td>
+<td align="right">14</td>
+<td align="right">74</td>
+<td align="right">1027</td>
+</tr>
+<tr class="even">
+<td align="left">compl_guinardia_dactyliosolen</td>
+<td align="left">12</td>
+<td align="right">45.042</td>
+<td align="right">43</td>
+<td align="right">14.603</td>
+<td align="right">213.259</td>
+<td align="right">15</td>
+<td align="right">68</td>
+<td align="right">1081</td>
+</tr>
+<tr class="odd">
+<td align="left">compl_guinardia_dactyliosolen</td>
+<td align="left">13</td>
+<td align="right">43.500</td>
+<td align="right">40</td>
+<td align="right">11.942</td>
+<td align="right">142.609</td>
+<td align="right">20</td>
+<td align="right">70</td>
+<td align="right">1044</td>
+</tr>
+<tr class="even">
+<td align="left">compl_guinardia_dactyliosolen</td>
+<td align="left">14</td>
+<td align="right">48.833</td>
+<td align="right">46</td>
+<td align="right">16.207</td>
+<td align="right">262.667</td>
+<td align="right">12</td>
+<td align="right">82</td>
+<td align="right">1172</td>
+</tr>
+<tr class="odd">
+<td align="left">compl_guinardia_dactyliosolen</td>
+<td align="left">15</td>
+<td align="right">33.625</td>
+<td align="right">30</td>
+<td align="right">11.883</td>
+<td align="right">141.201</td>
+<td align="right">15</td>
+<td align="right">64</td>
+<td align="right">807</td>
+</tr>
+<tr class="even">
+<td align="left">compl_guinardia_dactyliosolen</td>
+<td align="left">16</td>
+<td align="right">60.750</td>
+<td align="right">56</td>
+<td align="right">31.347</td>
+<td align="right">982.630</td>
+<td align="right">18</td>
+<td align="right">144</td>
+<td align="right">1458</td>
+</tr>
+<tr class="odd">
+<td align="left">compl_guinardia_dactyliosolen</td>
+<td align="left">17</td>
+<td align="right">81.542</td>
+<td align="right">82</td>
+<td align="right">17.749</td>
+<td align="right">315.042</td>
+<td align="right">44</td>
+<td align="right">112</td>
+<td align="right">1957</td>
+</tr>
+<tr class="even">
+<td align="left">compl_guinardia_dactyliosolen</td>
+<td align="left">18</td>
+<td align="right">75.917</td>
+<td align="right">78</td>
+<td align="right">22.952</td>
+<td align="right">526.775</td>
+<td align="right">35</td>
+<td align="right">120</td>
+<td align="right">1822</td>
+</tr>
+<tr class="odd">
+<td align="left">compl_guinardia_dactyliosolen</td>
+<td align="left">19</td>
+<td align="right">71.125</td>
+<td align="right">77</td>
+<td align="right">18.080</td>
+<td align="right">326.897</td>
+<td align="right">33</td>
+<td align="right">102</td>
+<td align="right">1707</td>
+</tr>
+<tr class="even">
+<td align="left">compl_guinardia_dactyliosolen</td>
+<td align="left">20</td>
+<td align="right">76.083</td>
+<td align="right">76</td>
+<td align="right">19.455</td>
+<td align="right">378.514</td>
+<td align="right">39</td>
+<td align="right">106</td>
+<td align="right">1826</td>
+</tr>
+<tr class="odd">
+<td align="left">compl_guinardia_dactyliosolen</td>
+<td align="left">21</td>
+<td align="right">60.417</td>
+<td align="right">54</td>
+<td align="right">19.357</td>
+<td align="right">374.688</td>
+<td align="right">32</td>
+<td align="right">107</td>
+<td align="right">1450</td>
+</tr>
+<tr class="even">
+<td align="left">compl_guinardia_dactyliosolen</td>
+<td align="left">22</td>
+<td align="right">46.500</td>
+<td align="right">48</td>
+<td align="right">18.132</td>
+<td align="right">328.783</td>
+<td align="right">21</td>
+<td align="right">82</td>
+<td align="right">1116</td>
+</tr>
+<tr class="odd">
+<td align="left">compl_guinardia_dactyliosolen</td>
+<td align="left">23</td>
+<td align="right">52.500</td>
+<td align="right">49</td>
+<td align="right">13.622</td>
+<td align="right">185.565</td>
+<td align="right">33</td>
+<td align="right">83</td>
+<td align="right">1260</td>
+</tr>
+<tr class="even">
+<td align="left">compl_guinardia_dactyliosolen</td>
+<td align="left">24</td>
+<td align="right">75.542</td>
+<td align="right">74</td>
+<td align="right">16.413</td>
+<td align="right">269.389</td>
+<td align="right">48</td>
+<td align="right">102</td>
+<td align="right">1813</td>
+</tr>
+<tr class="odd">
+<td align="left">compl_guinardia_dactyliosolen</td>
+<td align="left">25</td>
+<td align="right">84.042</td>
+<td align="right">83</td>
+<td align="right">21.142</td>
+<td align="right">446.998</td>
+<td align="right">42</td>
+<td align="right">124</td>
+<td align="right">2017</td>
+</tr>
+<tr class="even">
+<td align="left">compl_guinardia_dactyliosolen</td>
+<td align="left">26</td>
+<td align="right">105.333</td>
+<td align="right">100</td>
+<td align="right">31.558</td>
+<td align="right">995.884</td>
+<td align="right">63</td>
+<td align="right">178</td>
+<td align="right">2528</td>
+</tr>
+<tr class="odd">
+<td align="left">compl_guinardia_dactyliosolen</td>
+<td align="left">27</td>
+<td align="right">155.125</td>
+<td align="right">150</td>
+<td align="right">39.563</td>
+<td align="right">1565.245</td>
+<td align="right">65</td>
+<td align="right">218</td>
+<td align="right">3723</td>
+</tr>
+<tr class="even">
+<td align="left">compl_guinardia_dactyliosolen</td>
+<td align="left">28</td>
+<td align="right">177.625</td>
+<td align="right">178</td>
+<td align="right">30.541</td>
+<td align="right">932.766</td>
+<td align="right">109</td>
+<td align="right">227</td>
+<td align="right">4263</td>
+</tr>
+<tr class="odd">
+<td align="left">compl_guinardia_dactyliosolen</td>
+<td align="left">29</td>
+<td align="right">163.792</td>
+<td align="right">158</td>
+<td align="right">42.514</td>
+<td align="right">1807.476</td>
+<td align="right">100</td>
+<td align="right">246</td>
+<td align="right">3931</td>
+</tr>
+<tr class="even">
+<td align="left">compl_guinardia_dactyliosolen</td>
+<td align="left">30</td>
+<td align="right">111.625</td>
+<td align="right">106</td>
+<td align="right">23.969</td>
+<td align="right">574.505</td>
+<td align="right">79</td>
+<td align="right">173</td>
+<td align="right">2679</td>
+</tr>
+<tr class="odd">
+<td align="left">compl_rhizosolenia_proboscia</td>
+<td align="left">1</td>
+<td align="right">29.640</td>
+<td align="right">30</td>
+<td align="right">14.136</td>
+<td align="right">199.823</td>
+<td align="right">4</td>
+<td align="right">57</td>
+<td align="right">741</td>
+</tr>
+<tr class="even">
+<td align="left">compl_rhizosolenia_proboscia</td>
+<td align="left">2</td>
+<td align="right">45.125</td>
+<td align="right">43</td>
+<td align="right">22.905</td>
+<td align="right">524.636</td>
+<td align="right">12</td>
+<td align="right">91</td>
+<td align="right">1083</td>
+</tr>
+<tr class="odd">
+<td align="left">compl_rhizosolenia_proboscia</td>
+<td align="left">3</td>
+<td align="right">48.091</td>
+<td align="right">48</td>
+<td align="right">15.408</td>
+<td align="right">237.420</td>
+<td align="right">13</td>
+<td align="right">73</td>
+<td align="right">1058</td>
+</tr>
+<tr class="even">
+<td align="left">compl_rhizosolenia_proboscia</td>
+<td align="left">4</td>
+<td align="right">24.667</td>
+<td align="right">28</td>
+<td align="right">9.531</td>
+<td align="right">90.841</td>
+<td align="right">6</td>
+<td align="right">37</td>
+<td align="right">592</td>
+</tr>
+<tr class="odd">
+<td align="left">compl_rhizosolenia_proboscia</td>
+<td align="left">5</td>
+<td align="right">13.667</td>
+<td align="right">14</td>
+<td align="right">5.990</td>
+<td align="right">35.884</td>
+<td align="right">1</td>
+<td align="right">26</td>
+<td align="right">328</td>
+</tr>
+<tr class="even">
+<td align="left">compl_rhizosolenia_proboscia</td>
+<td align="left">6</td>
+<td align="right">13.042</td>
+<td align="right">13</td>
+<td align="right">3.770</td>
+<td align="right">14.216</td>
+<td align="right">6</td>
+<td align="right">20</td>
+<td align="right">313</td>
+</tr>
+<tr class="odd">
+<td align="left">compl_rhizosolenia_proboscia</td>
+<td align="left">7</td>
+<td align="right">14.917</td>
+<td align="right">16</td>
+<td align="right">5.233</td>
+<td align="right">27.384</td>
+<td align="right">4</td>
+<td align="right">23</td>
+<td align="right">358</td>
+</tr>
+<tr class="even">
+<td align="left">compl_rhizosolenia_proboscia</td>
+<td align="left">8</td>
+<td align="right">19.208</td>
+<td align="right">18</td>
+<td align="right">5.934</td>
+<td align="right">35.216</td>
+<td align="right">8</td>
+<td align="right">32</td>
+<td align="right">461</td>
+</tr>
+<tr class="odd">
+<td align="left">compl_rhizosolenia_proboscia</td>
+<td align="left">9</td>
+<td align="right">26.458</td>
+<td align="right">26</td>
+<td align="right">8.851</td>
+<td align="right">78.346</td>
+<td align="right">8</td>
+<td align="right">48</td>
+<td align="right">635</td>
+</tr>
+<tr class="even">
+<td align="left">compl_rhizosolenia_proboscia</td>
+<td align="left">10</td>
+<td align="right">34.833</td>
+<td align="right">34</td>
+<td align="right">13.422</td>
+<td align="right">180.145</td>
+<td align="right">8</td>
+<td align="right">68</td>
+<td align="right">836</td>
+</tr>
+<tr class="odd">
+<td align="left">compl_rhizosolenia_proboscia</td>
+<td align="left">11</td>
+<td align="right">41.083</td>
+<td align="right">42</td>
+<td align="right">14.911</td>
+<td align="right">222.341</td>
+<td align="right">13</td>
+<td align="right">69</td>
+<td align="right">986</td>
+</tr>
+<tr class="even">
+<td align="left">compl_rhizosolenia_proboscia</td>
+<td align="left">12</td>
+<td align="right">55.625</td>
+<td align="right">54</td>
+<td align="right">19.877</td>
+<td align="right">395.114</td>
+<td align="right">21</td>
+<td align="right">91</td>
+<td align="right">1335</td>
+</tr>
+<tr class="odd">
+<td align="left">compl_rhizosolenia_proboscia</td>
+<td align="left">13</td>
+<td align="right">70.417</td>
+<td align="right">72</td>
+<td align="right">16.513</td>
+<td align="right">272.688</td>
+<td align="right">32</td>
+<td align="right">96</td>
+<td align="right">1690</td>
+</tr>
+<tr class="even">
+<td align="left">compl_rhizosolenia_proboscia</td>
+<td align="left">14</td>
+<td align="right">74.083</td>
+<td align="right">72</td>
+<td align="right">14.984</td>
+<td align="right">224.514</td>
+<td align="right">50</td>
+<td align="right">109</td>
+<td align="right">1778</td>
+</tr>
+<tr class="odd">
+<td align="left">compl_rhizosolenia_proboscia</td>
+<td align="left">15</td>
+<td align="right">86.292</td>
+<td align="right">87</td>
+<td align="right">29.527</td>
+<td align="right">871.868</td>
+<td align="right">32</td>
+<td align="right">145</td>
+<td align="right">2071</td>
+</tr>
+<tr class="even">
+<td align="left">compl_rhizosolenia_proboscia</td>
+<td align="left">16</td>
+<td align="right">100.083</td>
+<td align="right">106</td>
+<td align="right">25.001</td>
+<td align="right">625.036</td>
+<td align="right">35</td>
+<td align="right">148</td>
+<td align="right">2402</td>
+</tr>
+<tr class="odd">
+<td align="left">compl_rhizosolenia_proboscia</td>
+<td align="left">17</td>
+<td align="right">147.333</td>
+<td align="right">148</td>
+<td align="right">43.531</td>
+<td align="right">1894.928</td>
+<td align="right">77</td>
+<td align="right">222</td>
+<td align="right">3536</td>
+</tr>
+<tr class="even">
+<td align="left">compl_rhizosolenia_proboscia</td>
+<td align="left">18</td>
+<td align="right">174.083</td>
+<td align="right">170</td>
+<td align="right">47.671</td>
+<td align="right">2272.514</td>
+<td align="right">104</td>
+<td align="right">253</td>
+<td align="right">4178</td>
+</tr>
+<tr class="odd">
+<td align="left">compl_rhizosolenia_proboscia</td>
+<td align="left">19</td>
+<td align="right">158.292</td>
+<td align="right">162</td>
+<td align="right">31.661</td>
+<td align="right">1002.389</td>
+<td align="right">92</td>
+<td align="right">208</td>
+<td align="right">3799</td>
+</tr>
+<tr class="even">
+<td align="left">compl_rhizosolenia_proboscia</td>
+<td align="left">20</td>
+<td align="right">160.833</td>
+<td align="right">155</td>
+<td align="right">40.205</td>
+<td align="right">1616.406</td>
+<td align="right">95</td>
+<td align="right">255</td>
+<td align="right">3860</td>
+</tr>
+<tr class="odd">
+<td align="left">compl_rhizosolenia_proboscia</td>
+<td align="left">21</td>
+<td align="right">159.958</td>
+<td align="right">150</td>
+<td align="right">51.695</td>
+<td align="right">2672.389</td>
+<td align="right">77</td>
+<td align="right">269</td>
+<td align="right">3839</td>
+</tr>
+<tr class="even">
+<td align="left">compl_rhizosolenia_proboscia</td>
+<td align="left">22</td>
+<td align="right">176.958</td>
+<td align="right">158</td>
+<td align="right">74.710</td>
+<td align="right">5581.607</td>
+<td align="right">63</td>
+<td align="right">317</td>
+<td align="right">4247</td>
+</tr>
+<tr class="odd">
+<td align="left">compl_rhizosolenia_proboscia</td>
+<td align="left">23</td>
+<td align="right">87.208</td>
+<td align="right">87</td>
+<td align="right">24.910</td>
+<td align="right">620.520</td>
+<td align="right">42</td>
+<td align="right">129</td>
+<td align="right">2093</td>
+</tr>
+<tr class="even">
+<td align="left">compl_rhizosolenia_proboscia</td>
+<td align="left">24</td>
+<td align="right">56.333</td>
+<td align="right">52</td>
+<td align="right">18.705</td>
+<td align="right">349.884</td>
+<td align="right">27</td>
+<td align="right">100</td>
+<td align="right">1352</td>
+</tr>
+<tr class="odd">
+<td align="left">compl_rhizosolenia_proboscia</td>
+<td align="left">25</td>
+<td align="right">27.542</td>
+<td align="right">24</td>
+<td align="right">11.485</td>
+<td align="right">131.911</td>
+<td align="right">11</td>
+<td align="right">58</td>
+<td align="right">661</td>
+</tr>
+<tr class="even">
+<td align="left">compl_rhizosolenia_proboscia</td>
+<td align="left">26</td>
+<td align="right">13.625</td>
+<td align="right">12</td>
+<td align="right">5.199</td>
+<td align="right">27.027</td>
+<td align="right">2</td>
+<td align="right">24</td>
+<td align="right">327</td>
+</tr>
+<tr class="odd">
+<td align="left">compl_rhizosolenia_proboscia</td>
+<td align="left">27</td>
+<td align="right">16.125</td>
+<td align="right">14</td>
+<td align="right">5.636</td>
+<td align="right">31.766</td>
+<td align="right">9</td>
+<td align="right">33</td>
+<td align="right">387</td>
+</tr>
+<tr class="even">
+<td align="left">compl_rhizosolenia_proboscia</td>
+<td align="left">28</td>
+<td align="right">12.833</td>
+<td align="right">12</td>
+<td align="right">5.206</td>
+<td align="right">27.101</td>
+<td align="right">5</td>
+<td align="right">26</td>
+<td align="right">308</td>
+</tr>
+<tr class="odd">
+<td align="left">compl_rhizosolenia_proboscia</td>
+<td align="left">29</td>
+<td align="right">9.500</td>
+<td align="right">10</td>
+<td align="right">3.121</td>
+<td align="right">9.739</td>
+<td align="right">5</td>
+<td align="right">15</td>
+<td align="right">228</td>
+</tr>
+<tr class="even">
+<td align="left">compl_rhizosolenia_proboscia</td>
+<td align="left">30</td>
+<td align="right">9.875</td>
+<td align="right">8</td>
+<td align="right">3.675</td>
+<td align="right">13.505</td>
+<td align="right">5</td>
+<td align="right">18</td>
+<td align="right">237</td>
+</tr>
+<tr class="odd">
+<td align="left">coscinodiscus</td>
+<td align="left">1</td>
+<td align="right">1180.400</td>
+<td align="right">954</td>
+<td align="right">865.383</td>
+<td align="right">748887.500</td>
+<td align="right">348</td>
+<td align="right">4575</td>
+<td align="right">29510</td>
+</tr>
+<tr class="even">
+<td align="left">coscinodiscus</td>
+<td align="left">2</td>
+<td align="right">713.292</td>
+<td align="right">744</td>
+<td align="right">379.436</td>
+<td align="right">143971.520</td>
+<td align="right">154</td>
+<td align="right">1506</td>
+<td align="right">17119</td>
+</tr>
+<tr class="odd">
+<td align="left">coscinodiscus</td>
+<td align="left">3</td>
+<td align="right">623.318</td>
+<td align="right">626</td>
+<td align="right">235.690</td>
+<td align="right">55549.942</td>
+<td align="right">146</td>
+<td align="right">1111</td>
+<td align="right">13713</td>
+</tr>
+<tr class="even">
+<td align="left">coscinodiscus</td>
+<td align="left">4</td>
+<td align="right">766.417</td>
+<td align="right">683</td>
+<td align="right">373.681</td>
+<td align="right">139637.471</td>
+<td align="right">230</td>
+<td align="right">1491</td>
+<td align="right">18394</td>
+</tr>
+<tr class="odd">
+<td align="left">coscinodiscus</td>
+<td align="left">5</td>
+<td align="right">577.625</td>
+<td align="right">508</td>
+<td align="right">360.562</td>
+<td align="right">130005.027</td>
+<td align="right">182</td>
+<td align="right">1711</td>
+<td align="right">13863</td>
+</tr>
+<tr class="even">
+<td align="left">coscinodiscus</td>
+<td align="left">6</td>
+<td align="right">576.917</td>
+<td align="right">498</td>
+<td align="right">343.165</td>
+<td align="right">117762.514</td>
+<td align="right">125</td>
+<td align="right">1680</td>
+<td align="right">13846</td>
+</tr>
+<tr class="odd">
+<td align="left">coscinodiscus</td>
+<td align="left">7</td>
+<td align="right">1012.542</td>
+<td align="right">888</td>
+<td align="right">609.272</td>
+<td align="right">371211.998</td>
+<td align="right">234</td>
+<td align="right">2733</td>
+<td align="right">24301</td>
+</tr>
+<tr class="even">
+<td align="left">coscinodiscus</td>
+<td align="left">8</td>
+<td align="right">2280.750</td>
+<td align="right">2020</td>
+<td align="right">1115.328</td>
+<td align="right">1243955.935</td>
+<td align="right">649</td>
+<td align="right">5040</td>
+<td align="right">54738</td>
+</tr>
+<tr class="odd">
+<td align="left">coscinodiscus</td>
+<td align="left">9</td>
+<td align="right">2544.292</td>
+<td align="right">2046</td>
+<td align="right">1414.534</td>
+<td align="right">2000906.303</td>
+<td align="right">473</td>
+<td align="right">6731</td>
+<td align="right">61063</td>
+</tr>
+<tr class="even">
+<td align="left">coscinodiscus</td>
+<td align="left">10</td>
+<td align="right">2071.375</td>
+<td align="right">2126</td>
+<td align="right">728.448</td>
+<td align="right">530637.027</td>
+<td align="right">718</td>
+<td align="right">3823</td>
+<td align="right">49713</td>
+</tr>
+<tr class="odd">
+<td align="left">coscinodiscus</td>
+<td align="left">11</td>
+<td align="right">2001.000</td>
+<td align="right">1998</td>
+<td align="right">700.162</td>
+<td align="right">490226.174</td>
+<td align="right">632</td>
+<td align="right">3530</td>
+<td align="right">48024</td>
+</tr>
+<tr class="even">
+<td align="left">coscinodiscus</td>
+<td align="left">12</td>
+<td align="right">2099.292</td>
+<td align="right">1834</td>
+<td align="right">901.401</td>
+<td align="right">812523.607</td>
+<td align="right">691</td>
+<td align="right">3863</td>
+<td align="right">50383</td>
+</tr>
+<tr class="odd">
+<td align="left">coscinodiscus</td>
+<td align="left">13</td>
+<td align="right">2510.417</td>
+<td align="right">2650</td>
+<td align="right">831.229</td>
+<td align="right">690940.949</td>
+<td align="right">847</td>
+<td align="right">4481</td>
+<td align="right">60250</td>
+</tr>
+<tr class="even">
+<td align="left">coscinodiscus</td>
+<td align="left">14</td>
+<td align="right">3403.708</td>
+<td align="right">3310</td>
+<td align="right">1319.907</td>
+<td align="right">1742154.389</td>
+<td align="right">1465</td>
+<td align="right">7057</td>
+<td align="right">81689</td>
+</tr>
+<tr class="odd">
+<td align="left">coscinodiscus</td>
+<td align="left">15</td>
+<td align="right">3153.375</td>
+<td align="right">2869</td>
+<td align="right">1264.975</td>
+<td align="right">1600160.505</td>
+<td align="right">1501</td>
+<td align="right">6184</td>
+<td align="right">75681</td>
+</tr>
+<tr class="even">
+<td align="left">coscinodiscus</td>
+<td align="left">16</td>
+<td align="right">3920.542</td>
+<td align="right">3984</td>
+<td align="right">1185.258</td>
+<td align="right">1404837.650</td>
+<td align="right">2065</td>
+<td align="right">7328</td>
+<td align="right">94093</td>
+</tr>
+<tr class="odd">
+<td align="left">coscinodiscus</td>
+<td align="left">17</td>
+<td align="right">6604.958</td>
+<td align="right">6522</td>
+<td align="right">1700.047</td>
+<td align="right">2890160.911</td>
+<td align="right">3644</td>
+<td align="right">10051</td>
+<td align="right">158519</td>
+</tr>
+<tr class="even">
+<td align="left">coscinodiscus</td>
+<td align="left">18</td>
+<td align="right">8089.833</td>
+<td align="right">6860</td>
+<td align="right">3412.312</td>
+<td align="right">11643873.362</td>
+<td align="right">4366</td>
+<td align="right">16304</td>
+<td align="right">194156</td>
+</tr>
+<tr class="odd">
+<td align="left">coscinodiscus</td>
+<td align="left">19</td>
+<td align="right">8017.500</td>
+<td align="right">7357</td>
+<td align="right">2495.037</td>
+<td align="right">6225211.739</td>
+<td align="right">4719</td>
+<td align="right">15811</td>
+<td align="right">192420</td>
+</tr>
+<tr class="even">
+<td align="left">coscinodiscus</td>
+<td align="left">20</td>
+<td align="right">6967.708</td>
+<td align="right">6176</td>
+<td align="right">2373.745</td>
+<td align="right">5634666.303</td>
+<td align="right">3965</td>
+<td align="right">13372</td>
+<td align="right">167225</td>
+</tr>
+<tr class="odd">
+<td align="left">coscinodiscus</td>
+<td align="left">21</td>
+<td align="right">8953.583</td>
+<td align="right">7994</td>
+<td align="right">3440.659</td>
+<td align="right">11838137.036</td>
+<td align="right">4156</td>
+<td align="right">16571</td>
+<td align="right">214886</td>
+</tr>
+<tr class="even">
+<td align="left">coscinodiscus</td>
+<td align="left">22</td>
+<td align="right">6235.458</td>
+<td align="right">5197</td>
+<td align="right">3972.803</td>
+<td align="right">15783162.520</td>
+<td align="right">2169</td>
+<td align="right">17718</td>
+<td align="right">149651</td>
+</tr>
+<tr class="odd">
+<td align="left">coscinodiscus</td>
+<td align="left">23</td>
+<td align="right">11200.542</td>
+<td align="right">10766</td>
+<td align="right">4737.365</td>
+<td align="right">22442622.955</td>
+<td align="right">4493</td>
+<td align="right">22249</td>
+<td align="right">268813</td>
+</tr>
+<tr class="even">
+<td align="left">coscinodiscus</td>
+<td align="left">24</td>
+<td align="right">14586.125</td>
+<td align="right">13702</td>
+<td align="right">5143.567</td>
+<td align="right">26456278.984</td>
+<td align="right">5725</td>
+<td align="right">23477</td>
+<td align="right">350067</td>
+</tr>
+<tr class="odd">
+<td align="left">coscinodiscus</td>
+<td align="left">25</td>
+<td align="right">12243.417</td>
+<td align="right">11970</td>
+<td align="right">3388.528</td>
+<td align="right">11482120.514</td>
+<td align="right">6279</td>
+<td align="right">20060</td>
+<td align="right">293842</td>
+</tr>
+<tr class="even">
+<td align="left">coscinodiscus</td>
+<td align="left">26</td>
+<td align="right">15854.875</td>
+<td align="right">15370</td>
+<td align="right">5577.513</td>
+<td align="right">31108646.027</td>
+<td align="right">8802</td>
+<td align="right">27863</td>
+<td align="right">380517</td>
+</tr>
+<tr class="odd">
+<td align="left">coscinodiscus</td>
+<td align="left">27</td>
+<td align="right">18509.250</td>
+<td align="right">16490</td>
+<td align="right">6259.203</td>
+<td align="right">39177617.239</td>
+<td align="right">11143</td>
+<td align="right">30811</td>
+<td align="right">444222</td>
+</tr>
+<tr class="even">
+<td align="left">coscinodiscus</td>
+<td align="left">28</td>
+<td align="right">19244.083</td>
+<td align="right">20302</td>
+<td align="right">4897.469</td>
+<td align="right">23985204.688</td>
+<td align="right">9002</td>
+<td align="right">25991</td>
+<td align="right">461858</td>
+</tr>
+<tr class="odd">
+<td align="left">coscinodiscus</td>
+<td align="left">29</td>
+<td align="right">17710.708</td>
+<td align="right">18191</td>
+<td align="right">4744.755</td>
+<td align="right">22512695.781</td>
+<td align="right">9090</td>
+<td align="right">26485</td>
+<td align="right">425057</td>
+</tr>
+<tr class="even">
+<td align="left">coscinodiscus</td>
+<td align="left">30</td>
+<td align="right">9687.083</td>
+<td align="right">9156</td>
+<td align="right">2637.832</td>
+<td align="right">6958158.080</td>
+<td align="right">6136</td>
+<td align="right">17493</td>
+<td align="right">232490</td>
+</tr>
+<tr class="odd">
+<td align="left">detritos</td>
+<td align="left">1</td>
+<td align="right">31.440</td>
+<td align="right">34</td>
+<td align="right">11.072</td>
+<td align="right">122.590</td>
+<td align="right">4</td>
+<td align="right">48</td>
+<td align="right">786</td>
+</tr>
+<tr class="even">
+<td align="left">detritos</td>
+<td align="left">2</td>
+<td align="right">32.583</td>
+<td align="right">26</td>
+<td align="right">20.868</td>
+<td align="right">435.471</td>
+<td align="right">5</td>
+<td align="right">97</td>
+<td align="right">782</td>
+</tr>
+<tr class="odd">
+<td align="left">detritos</td>
+<td align="left">3</td>
+<td align="right">31.409</td>
+<td align="right">32</td>
+<td align="right">12.595</td>
+<td align="right">158.634</td>
+<td align="right">9</td>
+<td align="right">53</td>
+<td align="right">691</td>
+</tr>
+<tr class="even">
+<td align="left">detritos</td>
+<td align="left">4</td>
+<td align="right">28.833</td>
+<td align="right">28</td>
+<td align="right">9.907</td>
+<td align="right">98.145</td>
+<td align="right">15</td>
+<td align="right">50</td>
+<td align="right">692</td>
+</tr>
+<tr class="odd">
+<td align="left">detritos</td>
+<td align="left">5</td>
+<td align="right">29.417</td>
+<td align="right">28</td>
+<td align="right">10.862</td>
+<td align="right">117.993</td>
+<td align="right">9</td>
+<td align="right">53</td>
+<td align="right">706</td>
+</tr>
+<tr class="even">
+<td align="left">detritos</td>
+<td align="left">6</td>
+<td align="right">29.833</td>
+<td align="right">30</td>
+<td align="right">10.433</td>
+<td align="right">108.841</td>
+<td align="right">12</td>
+<td align="right">53</td>
+<td align="right">716</td>
+</tr>
+<tr class="odd">
+<td align="left">detritos</td>
+<td align="left">7</td>
+<td align="right">33.417</td>
+<td align="right">32</td>
+<td align="right">11.470</td>
+<td align="right">131.558</td>
+<td align="right">14</td>
+<td align="right">61</td>
+<td align="right">802</td>
+</tr>
+<tr class="even">
+<td align="left">detritos</td>
+<td align="left">8</td>
+<td align="right">41.375</td>
+<td align="right">40</td>
+<td align="right">17.759</td>
+<td align="right">315.375</td>
+<td align="right">12</td>
+<td align="right">91</td>
+<td align="right">993</td>
+</tr>
+<tr class="odd">
+<td align="left">detritos</td>
+<td align="left">9</td>
+<td align="right">40.583</td>
+<td align="right">44</td>
+<td align="right">12.683</td>
+<td align="right">160.862</td>
+<td align="right">14</td>
+<td align="right">64</td>
+<td align="right">974</td>
+</tr>
+<tr class="even">
+<td align="left">detritos</td>
+<td align="left">10</td>
+<td align="right">35.250</td>
+<td align="right">32</td>
+<td align="right">11.829</td>
+<td align="right">139.935</td>
+<td align="right">20</td>
+<td align="right">62</td>
+<td align="right">846</td>
+</tr>
+<tr class="odd">
+<td align="left">detritos</td>
+<td align="left">11</td>
+<td align="right">41.667</td>
+<td align="right">45</td>
+<td align="right">11.694</td>
+<td align="right">136.754</td>
+<td align="right">17</td>
+<td align="right">57</td>
+<td align="right">1000</td>
+</tr>
+<tr class="even">
+<td align="left">detritos</td>
+<td align="left">12</td>
+<td align="right">41.583</td>
+<td align="right">42</td>
+<td align="right">11.310</td>
+<td align="right">127.906</td>
+<td align="right">12</td>
+<td align="right">58</td>
+<td align="right">998</td>
+</tr>
+<tr class="odd">
+<td align="left">detritos</td>
+<td align="left">13</td>
+<td align="right">38.792</td>
+<td align="right">37</td>
+<td align="right">10.950</td>
+<td align="right">119.911</td>
+<td align="right">20</td>
+<td align="right">67</td>
+<td align="right">931</td>
+</tr>
+<tr class="even">
+<td align="left">detritos</td>
+<td align="left">14</td>
+<td align="right">45.417</td>
+<td align="right">46</td>
+<td align="right">8.910</td>
+<td align="right">79.384</td>
+<td align="right">25</td>
+<td align="right">61</td>
+<td align="right">1090</td>
+</tr>
+<tr class="odd">
+<td align="left">detritos</td>
+<td align="left">15</td>
+<td align="right">37.792</td>
+<td align="right">36</td>
+<td align="right">12.656</td>
+<td align="right">160.172</td>
+<td align="right">20</td>
+<td align="right">71</td>
+<td align="right">907</td>
+</tr>
+<tr class="even">
+<td align="left">detritos</td>
+<td align="left">16</td>
+<td align="right">94.292</td>
+<td align="right">75</td>
+<td align="right">65.492</td>
+<td align="right">4289.259</td>
+<td align="right">20</td>
+<td align="right">258</td>
+<td align="right">2263</td>
+</tr>
+<tr class="odd">
+<td align="left">detritos</td>
+<td align="left">17</td>
+<td align="right">72.292</td>
+<td align="right">67</td>
+<td align="right">18.360</td>
+<td align="right">337.085</td>
+<td align="right">48</td>
+<td align="right">122</td>
+<td align="right">1735</td>
+</tr>
+<tr class="even">
+<td align="left">detritos</td>
+<td align="left">18</td>
+<td align="right">63.042</td>
+<td align="right">66</td>
+<td align="right">14.496</td>
+<td align="right">210.129</td>
+<td align="right">33</td>
+<td align="right">101</td>
+<td align="right">1513</td>
+</tr>
+<tr class="odd">
+<td align="left">detritos</td>
+<td align="left">19</td>
+<td align="right">54.625</td>
+<td align="right">52</td>
+<td align="right">14.776</td>
+<td align="right">218.332</td>
+<td align="right">30</td>
+<td align="right">88</td>
+<td align="right">1311</td>
+</tr>
+<tr class="even">
+<td align="left">detritos</td>
+<td align="left">20</td>
+<td align="right">53.083</td>
+<td align="right">50</td>
+<td align="right">14.753</td>
+<td align="right">217.645</td>
+<td align="right">33</td>
+<td align="right">86</td>
+<td align="right">1274</td>
+</tr>
+<tr class="odd">
+<td align="left">detritos</td>
+<td align="left">21</td>
+<td align="right">49.083</td>
+<td align="right">44</td>
+<td align="right">15.039</td>
+<td align="right">226.167</td>
+<td align="right">32</td>
+<td align="right">77</td>
+<td align="right">1178</td>
+</tr>
+<tr class="even">
+<td align="left">detritos</td>
+<td align="left">22</td>
+<td align="right">42.333</td>
+<td align="right">43</td>
+<td align="right">15.485</td>
+<td align="right">239.797</td>
+<td align="right">19</td>
+<td align="right">79</td>
+<td align="right">1016</td>
+</tr>
+<tr class="odd">
+<td align="left">detritos</td>
+<td align="left">23</td>
+<td align="right">68.458</td>
+<td align="right">67</td>
+<td align="right">20.949</td>
+<td align="right">438.868</td>
+<td align="right">33</td>
+<td align="right">113</td>
+<td align="right">1643</td>
+</tr>
+<tr class="even">
+<td align="left">detritos</td>
+<td align="left">24</td>
+<td align="right">83.083</td>
+<td align="right">78</td>
+<td align="right">31.467</td>
+<td align="right">990.167</td>
+<td align="right">45</td>
+<td align="right">177</td>
+<td align="right">1994</td>
+</tr>
+<tr class="odd">
+<td align="left">detritos</td>
+<td align="left">25</td>
+<td align="right">70.458</td>
+<td align="right">72</td>
+<td align="right">17.129</td>
+<td align="right">293.389</td>
+<td align="right">35</td>
+<td align="right">104</td>
+<td align="right">1691</td>
+</tr>
+<tr class="even">
+<td align="left">detritos</td>
+<td align="left">26</td>
+<td align="right">73.542</td>
+<td align="right">68</td>
+<td align="right">15.469</td>
+<td align="right">239.303</td>
+<td align="right">47</td>
+<td align="right">107</td>
+<td align="right">1765</td>
+</tr>
+<tr class="odd">
+<td align="left">detritos</td>
+<td align="left">27</td>
+<td align="right">88.750</td>
+<td align="right">82</td>
+<td align="right">29.579</td>
+<td align="right">874.891</td>
+<td align="right">45</td>
+<td align="right">191</td>
+<td align="right">2130</td>
+</tr>
+<tr class="even">
+<td align="left">detritos</td>
+<td align="left">28</td>
+<td align="right">83.500</td>
+<td align="right">75</td>
+<td align="right">26.975</td>
+<td align="right">727.652</td>
+<td align="right">48</td>
+<td align="right">157</td>
+<td align="right">2004</td>
+</tr>
+<tr class="odd">
+<td align="left">detritos</td>
+<td align="left">29</td>
+<td align="right">70.833</td>
+<td align="right">66</td>
+<td align="right">23.286</td>
+<td align="right">542.232</td>
+<td align="right">36</td>
+<td align="right">128</td>
+<td align="right">1700</td>
+</tr>
+<tr class="even">
+<td align="left">detritos</td>
+<td align="left">30</td>
+<td align="right">51.875</td>
+<td align="right">50</td>
+<td align="right">16.685</td>
+<td align="right">278.375</td>
+<td align="right">22</td>
+<td align="right">94</td>
+<td align="right">1245</td>
+</tr>
+<tr class="odd">
+<td align="left">guinardia_striata</td>
+<td align="left">1</td>
+<td align="right">17.200</td>
+<td align="right">18</td>
+<td align="right">7.555</td>
+<td align="right">57.083</td>
+<td align="right">6</td>
+<td align="right">38</td>
+<td align="right">430</td>
+</tr>
+<tr class="even">
+<td align="left">guinardia_striata</td>
+<td align="left">2</td>
+<td align="right">16.375</td>
+<td align="right">15</td>
+<td align="right">11.313</td>
+<td align="right">127.984</td>
+<td align="right">2</td>
+<td align="right">50</td>
+<td align="right">393</td>
+</tr>
+<tr class="odd">
+<td align="left">guinardia_striata</td>
+<td align="left">3</td>
+<td align="right">14.227</td>
+<td align="right">12</td>
+<td align="right">7.892</td>
+<td align="right">62.279</td>
+<td align="right">3</td>
+<td align="right">35</td>
+<td align="right">313</td>
+</tr>
+<tr class="even">
+<td align="left">guinardia_striata</td>
+<td align="left">4</td>
+<td align="right">9.708</td>
+<td align="right">9</td>
+<td align="right">4.850</td>
+<td align="right">23.520</td>
+<td align="right">1</td>
+<td align="right">24</td>
+<td align="right">233</td>
+</tr>
+<tr class="odd">
+<td align="left">guinardia_striata</td>
+<td align="left">5</td>
+<td align="right">6.583</td>
+<td align="right">5</td>
+<td align="right">3.922</td>
+<td align="right">15.384</td>
+<td align="right">1</td>
+<td align="right">15</td>
+<td align="right">158</td>
+</tr>
+<tr class="even">
+<td align="left">guinardia_striata</td>
+<td align="left">6</td>
+<td align="right">8.250</td>
+<td align="right">8</td>
+<td align="right">4.099</td>
+<td align="right">16.804</td>
+<td align="right">1</td>
+<td align="right">18</td>
+<td align="right">198</td>
+</tr>
+<tr class="odd">
+<td align="left">guinardia_striata</td>
+<td align="left">7</td>
+<td align="right">8.292</td>
+<td align="right">8</td>
+<td align="right">4.408</td>
+<td align="right">19.433</td>
+<td align="right">1</td>
+<td align="right">19</td>
+<td align="right">199</td>
+</tr>
+<tr class="even">
+<td align="left">guinardia_striata</td>
+<td align="left">8</td>
+<td align="right">9.458</td>
+<td align="right">9</td>
+<td align="right">3.822</td>
+<td align="right">14.607</td>
+<td align="right">3</td>
+<td align="right">17</td>
+<td align="right">227</td>
+</tr>
+<tr class="odd">
+<td align="left">guinardia_striata</td>
+<td align="left">9</td>
+<td align="right">10.625</td>
+<td align="right">10</td>
+<td align="right">3.865</td>
+<td align="right">14.940</td>
+<td align="right">2</td>
+<td align="right">17</td>
+<td align="right">255</td>
+</tr>
+<tr class="even">
+<td align="left">guinardia_striata</td>
+<td align="left">10</td>
+<td align="right">10.208</td>
+<td align="right">11</td>
+<td align="right">5.340</td>
+<td align="right">28.520</td>
+<td align="right">2</td>
+<td align="right">23</td>
+<td align="right">245</td>
+</tr>
+<tr class="odd">
+<td align="left">guinardia_striata</td>
+<td align="left">11</td>
+<td align="right">12.583</td>
+<td align="right">12</td>
+<td align="right">4.951</td>
+<td align="right">24.514</td>
+<td align="right">5</td>
+<td align="right">22</td>
+<td align="right">302</td>
+</tr>
+<tr class="even">
+<td align="left">guinardia_striata</td>
+<td align="left">12</td>
+<td align="right">11.625</td>
+<td align="right">12</td>
+<td align="right">4.362</td>
+<td align="right">19.027</td>
+<td align="right">5</td>
+<td align="right">23</td>
+<td align="right">279</td>
+</tr>
+<tr class="odd">
+<td align="left">guinardia_striata</td>
+<td align="left">13</td>
+<td align="right">12.917</td>
+<td align="right">13</td>
+<td align="right">4.138</td>
+<td align="right">17.123</td>
+<td align="right">2</td>
+<td align="right">24</td>
+<td align="right">310</td>
+</tr>
+<tr class="even">
+<td align="left">guinardia_striata</td>
+<td align="left">14</td>
+<td align="right">12.875</td>
+<td align="right">12</td>
+<td align="right">5.136</td>
+<td align="right">26.375</td>
+<td align="right">4</td>
+<td align="right">26</td>
+<td align="right">309</td>
+</tr>
+<tr class="odd">
+<td align="left">guinardia_striata</td>
+<td align="left">15</td>
+<td align="right">11.792</td>
+<td align="right">10</td>
+<td align="right">5.548</td>
+<td align="right">30.781</td>
+<td align="right">4</td>
+<td align="right">30</td>
+<td align="right">283</td>
+</tr>
+<tr class="even">
+<td align="left">guinardia_striata</td>
+<td align="left">16</td>
+<td align="right">38.792</td>
+<td align="right">27</td>
+<td align="right">39.612</td>
+<td align="right">1569.129</td>
+<td align="right">6</td>
+<td align="right">167</td>
+<td align="right">931</td>
+</tr>
+<tr class="odd">
+<td align="left">guinardia_striata</td>
+<td align="left">17</td>
+<td align="right">19.708</td>
+<td align="right">17</td>
+<td align="right">7.647</td>
+<td align="right">58.476</td>
+<td align="right">8</td>
+<td align="right">39</td>
+<td align="right">473</td>
+</tr>
+<tr class="even">
+<td align="left">guinardia_striata</td>
+<td align="left">18</td>
+<td align="right">20.083</td>
+<td align="right">20</td>
+<td align="right">7.546</td>
+<td align="right">56.949</td>
+<td align="right">6</td>
+<td align="right">37</td>
+<td align="right">482</td>
+</tr>
+<tr class="odd">
+<td align="left">guinardia_striata</td>
+<td align="left">19</td>
+<td align="right">22.917</td>
+<td align="right">20</td>
+<td align="right">9.947</td>
+<td align="right">98.949</td>
+<td align="right">8</td>
+<td align="right">47</td>
+<td align="right">550</td>
+</tr>
+<tr class="even">
+<td align="left">guinardia_striata</td>
+<td align="left">20</td>
+<td align="right">23.500</td>
+<td align="right">24</td>
+<td align="right">7.265</td>
+<td align="right">52.783</td>
+<td align="right">11</td>
+<td align="right">44</td>
+<td align="right">564</td>
+</tr>
+<tr class="odd">
+<td align="left">guinardia_striata</td>
+<td align="left">21</td>
+<td align="right">18.292</td>
+<td align="right">17</td>
+<td align="right">8.100</td>
+<td align="right">65.607</td>
+<td align="right">7</td>
+<td align="right">35</td>
+<td align="right">439</td>
+</tr>
+<tr class="even">
+<td align="left">guinardia_striata</td>
+<td align="left">22</td>
+<td align="right">18.583</td>
+<td align="right">17</td>
+<td align="right">10.142</td>
+<td align="right">102.862</td>
+<td align="right">4</td>
+<td align="right">42</td>
+<td align="right">446</td>
+</tr>
+<tr class="odd">
+<td align="left">guinardia_striata</td>
+<td align="left">23</td>
+<td align="right">20.750</td>
+<td align="right">19</td>
+<td align="right">8.189</td>
+<td align="right">67.065</td>
+<td align="right">6</td>
+<td align="right">40</td>
+<td align="right">498</td>
+</tr>
+<tr class="even">
+<td align="left">guinardia_striata</td>
+<td align="left">24</td>
+<td align="right">25.292</td>
+<td align="right">22</td>
+<td align="right">9.813</td>
+<td align="right">96.303</td>
+<td align="right">10</td>
+<td align="right">44</td>
+<td align="right">607</td>
+</tr>
+<tr class="odd">
+<td align="left">guinardia_striata</td>
+<td align="left">25</td>
+<td align="right">22.958</td>
+<td align="right">22</td>
+<td align="right">8.100</td>
+<td align="right">65.607</td>
+<td align="right">9</td>
+<td align="right">39</td>
+<td align="right">551</td>
+</tr>
+<tr class="even">
+<td align="left">guinardia_striata</td>
+<td align="left">26</td>
+<td align="right">25.500</td>
+<td align="right">24</td>
+<td align="right">10.198</td>
+<td align="right">104.000</td>
+<td align="right">13</td>
+<td align="right">46</td>
+<td align="right">612</td>
+</tr>
+<tr class="odd">
+<td align="left">guinardia_striata</td>
+<td align="left">27</td>
+<td align="right">50.042</td>
+<td align="right">44</td>
+<td align="right">31.819</td>
+<td align="right">1012.476</td>
+<td align="right">19</td>
+<td align="right">170</td>
+<td align="right">1201</td>
+</tr>
+<tr class="even">
+<td align="left">guinardia_striata</td>
+<td align="left">28</td>
+<td align="right">32.792</td>
+<td align="right">33</td>
+<td align="right">8.910</td>
+<td align="right">79.389</td>
+<td align="right">16</td>
+<td align="right">51</td>
+<td align="right">787</td>
+</tr>
+<tr class="odd">
+<td align="left">guinardia_striata</td>
+<td align="left">29</td>
+<td align="right">29.875</td>
+<td align="right">30</td>
+<td align="right">10.796</td>
+<td align="right">116.549</td>
+<td align="right">14</td>
+<td align="right">52</td>
+<td align="right">717</td>
+</tr>
+<tr class="even">
+<td align="left">guinardia_striata</td>
+<td align="left">30</td>
+<td align="right">18.750</td>
+<td align="right">18</td>
+<td align="right">7.415</td>
+<td align="right">54.978</td>
+<td align="right">3</td>
+<td align="right">33</td>
+<td align="right">450</td>
+</tr>
+<tr class="odd">
+<td align="left">hemidiscus</td>
+<td align="left">1</td>
+<td align="right">71.680</td>
+<td align="right">68</td>
+<td align="right">33.419</td>
+<td align="right">1116.810</td>
+<td align="right">30</td>
+<td align="right">172</td>
+<td align="right">1792</td>
+</tr>
+<tr class="even">
+<td align="left">hemidiscus</td>
+<td align="left">2</td>
+<td align="right">69.792</td>
+<td align="right">68</td>
+<td align="right">33.242</td>
+<td align="right">1105.042</td>
+<td align="right">22</td>
+<td align="right">143</td>
+<td align="right">1675</td>
+</tr>
+<tr class="odd">
+<td align="left">hemidiscus</td>
+<td align="left">3</td>
+<td align="right">75.545</td>
+<td align="right">68</td>
+<td align="right">29.358</td>
+<td align="right">861.879</td>
+<td align="right">33</td>
+<td align="right">142</td>
+<td align="right">1662</td>
+</tr>
+<tr class="even">
+<td align="left">hemidiscus</td>
+<td align="left">4</td>
+<td align="right">42.500</td>
+<td align="right">40</td>
+<td align="right">19.691</td>
+<td align="right">387.739</td>
+<td align="right">11</td>
+<td align="right">84</td>
+<td align="right">1020</td>
+</tr>
+<tr class="odd">
+<td align="left">hemidiscus</td>
+<td align="left">5</td>
+<td align="right">28.750</td>
+<td align="right">26</td>
+<td align="right">12.159</td>
+<td align="right">147.848</td>
+<td align="right">9</td>
+<td align="right">59</td>
+<td align="right">690</td>
+</tr>
+<tr class="even">
+<td align="left">hemidiscus</td>
+<td align="left">6</td>
+<td align="right">30.833</td>
+<td align="right">28</td>
+<td align="right">13.535</td>
+<td align="right">183.188</td>
+<td align="right">15</td>
+<td align="right">68</td>
+<td align="right">740</td>
+</tr>
+<tr class="odd">
+<td align="left">hemidiscus</td>
+<td align="left">7</td>
+<td align="right">37.833</td>
+<td align="right">35</td>
+<td align="right">17.824</td>
+<td align="right">317.710</td>
+<td align="right">13</td>
+<td align="right">77</td>
+<td align="right">908</td>
+</tr>
+<tr class="even">
+<td align="left">hemidiscus</td>
+<td align="left">8</td>
+<td align="right">67.667</td>
+<td align="right">62</td>
+<td align="right">23.737</td>
+<td align="right">563.449</td>
+<td align="right">37</td>
+<td align="right">122</td>
+<td align="right">1624</td>
+</tr>
+<tr class="odd">
+<td align="left">hemidiscus</td>
+<td align="left">9</td>
+<td align="right">83.625</td>
+<td align="right">86</td>
+<td align="right">30.367</td>
+<td align="right">922.158</td>
+<td align="right">22</td>
+<td align="right">149</td>
+<td align="right">2007</td>
+</tr>
+<tr class="even">
+<td align="left">hemidiscus</td>
+<td align="left">10</td>
+<td align="right">77.042</td>
+<td align="right">74</td>
+<td align="right">30.069</td>
+<td align="right">904.129</td>
+<td align="right">30</td>
+<td align="right">154</td>
+<td align="right">1849</td>
+</tr>
+<tr class="odd">
+<td align="left">hemidiscus</td>
+<td align="left">11</td>
+<td align="right">89.792</td>
+<td align="right">90</td>
+<td align="right">25.480</td>
+<td align="right">649.216</td>
+<td align="right">44</td>
+<td align="right">126</td>
+<td align="right">2155</td>
+</tr>
+<tr class="even">
+<td align="left">hemidiscus</td>
+<td align="left">12</td>
+<td align="right">94.208</td>
+<td align="right">89</td>
+<td align="right">37.128</td>
+<td align="right">1378.520</td>
+<td align="right">35</td>
+<td align="right">171</td>
+<td align="right">2261</td>
+</tr>
+<tr class="odd">
+<td align="left">hemidiscus</td>
+<td align="left">13</td>
+<td align="right">103.458</td>
+<td align="right">104</td>
+<td align="right">28.767</td>
+<td align="right">827.563</td>
+<td align="right">41</td>
+<td align="right">174</td>
+<td align="right">2483</td>
+</tr>
+<tr class="even">
+<td align="left">hemidiscus</td>
+<td align="left">14</td>
+<td align="right">104.625</td>
+<td align="right">102</td>
+<td align="right">24.546</td>
+<td align="right">602.505</td>
+<td align="right">55</td>
+<td align="right">159</td>
+<td align="right">2511</td>
+</tr>
+<tr class="odd">
+<td align="left">hemidiscus</td>
+<td align="left">15</td>
+<td align="right">113.792</td>
+<td align="right">108</td>
+<td align="right">31.015</td>
+<td align="right">961.911</td>
+<td align="right">75</td>
+<td align="right">197</td>
+<td align="right">2731</td>
+</tr>
+<tr class="even">
+<td align="left">hemidiscus</td>
+<td align="left">16</td>
+<td align="right">139.000</td>
+<td align="right">142</td>
+<td align="right">31.366</td>
+<td align="right">983.826</td>
+<td align="right">68</td>
+<td align="right">207</td>
+<td align="right">3336</td>
+</tr>
+<tr class="odd">
+<td align="left">hemidiscus</td>
+<td align="left">17</td>
+<td align="right">192.417</td>
+<td align="right">202</td>
+<td align="right">53.089</td>
+<td align="right">2818.428</td>
+<td align="right">88</td>
+<td align="right">266</td>
+<td align="right">4618</td>
+</tr>
+<tr class="even">
+<td align="left">hemidiscus</td>
+<td align="left">18</td>
+<td align="right">223.042</td>
+<td align="right">214</td>
+<td align="right">51.193</td>
+<td align="right">2620.737</td>
+<td align="right">147</td>
+<td align="right">327</td>
+<td align="right">5353</td>
+</tr>
+<tr class="odd">
+<td align="left">hemidiscus</td>
+<td align="left">19</td>
+<td align="right">204.875</td>
+<td align="right">196</td>
+<td align="right">48.260</td>
+<td align="right">2328.984</td>
+<td align="right">120</td>
+<td align="right">293</td>
+<td align="right">4917</td>
+</tr>
+<tr class="even">
+<td align="left">hemidiscus</td>
+<td align="left">20</td>
+<td align="right">176.667</td>
+<td align="right">172</td>
+<td align="right">43.112</td>
+<td align="right">1858.667</td>
+<td align="right">98</td>
+<td align="right">256</td>
+<td align="right">4240</td>
+</tr>
+<tr class="odd">
+<td align="left">hemidiscus</td>
+<td align="left">21</td>
+<td align="right">154.750</td>
+<td align="right">154</td>
+<td align="right">49.771</td>
+<td align="right">2477.152</td>
+<td align="right">83</td>
+<td align="right">267</td>
+<td align="right">3714</td>
+</tr>
+<tr class="even">
+<td align="left">hemidiscus</td>
+<td align="left">22</td>
+<td align="right">135.667</td>
+<td align="right">136</td>
+<td align="right">48.947</td>
+<td align="right">2395.797</td>
+<td align="right">58</td>
+<td align="right">209</td>
+<td align="right">3256</td>
+</tr>
+<tr class="odd">
+<td align="left">hemidiscus</td>
+<td align="left">23</td>
+<td align="right">127.750</td>
+<td align="right">123</td>
+<td align="right">36.387</td>
+<td align="right">1324.022</td>
+<td align="right">71</td>
+<td align="right">215</td>
+<td align="right">3066</td>
+</tr>
+<tr class="even">
+<td align="left">hemidiscus</td>
+<td align="left">24</td>
+<td align="right">152.417</td>
+<td align="right">148</td>
+<td align="right">28.634</td>
+<td align="right">819.906</td>
+<td align="right">83</td>
+<td align="right">211</td>
+<td align="right">3658</td>
+</tr>
+<tr class="odd">
+<td align="left">hemidiscus</td>
+<td align="left">25</td>
+<td align="right">165.667</td>
+<td align="right">164</td>
+<td align="right">47.902</td>
+<td align="right">2294.580</td>
+<td align="right">89</td>
+<td align="right">290</td>
+<td align="right">3976</td>
+</tr>
+<tr class="even">
+<td align="left">hemidiscus</td>
+<td align="left">26</td>
+<td align="right">182.958</td>
+<td align="right">170</td>
+<td align="right">50.744</td>
+<td align="right">2574.998</td>
+<td align="right">107</td>
+<td align="right">287</td>
+<td align="right">4391</td>
+</tr>
+<tr class="odd">
+<td align="left">hemidiscus</td>
+<td align="left">27</td>
+<td align="right">167.583</td>
+<td align="right">164</td>
+<td align="right">36.442</td>
+<td align="right">1327.993</td>
+<td align="right">104</td>
+<td align="right">256</td>
+<td align="right">4022</td>
+</tr>
+<tr class="even">
+<td align="left">hemidiscus</td>
+<td align="left">28</td>
+<td align="right">201.833</td>
+<td align="right">200</td>
+<td align="right">30.677</td>
+<td align="right">941.101</td>
+<td align="right">134</td>
+<td align="right">271</td>
+<td align="right">4844</td>
+</tr>
+<tr class="odd">
+<td align="left">hemidiscus</td>
+<td align="left">29</td>
+<td align="right">224.000</td>
+<td align="right">214</td>
+<td align="right">46.076</td>
+<td align="right">2123.043</td>
+<td align="right">151</td>
+<td align="right">329</td>
+<td align="right">5376</td>
+</tr>
+<tr class="even">
+<td align="left">hemidiscus</td>
+<td align="left">30</td>
+<td align="right">181.500</td>
+<td align="right">176</td>
+<td align="right">48.307</td>
+<td align="right">2333.565</td>
+<td align="right">101</td>
+<td align="right">303</td>
+<td align="right">4356</td>
+</tr>
+<tr class="odd">
+<td align="left">rhizosolenia_robusta</td>
+<td align="left">1</td>
+<td align="right">35.680</td>
+<td align="right">33</td>
+<td align="right">13.777</td>
+<td align="right">189.810</td>
+<td align="right">14</td>
+<td align="right">74</td>
+<td align="right">892</td>
+</tr>
+<tr class="even">
+<td align="left">rhizosolenia_robusta</td>
+<td align="left">2</td>
+<td align="right">42.958</td>
+<td align="right">36</td>
+<td align="right">25.772</td>
+<td align="right">664.216</td>
+<td align="right">13</td>
+<td align="right">123</td>
+<td align="right">1031</td>
+</tr>
+<tr class="odd">
+<td align="left">rhizosolenia_robusta</td>
+<td align="left">3</td>
+<td align="right">34.455</td>
+<td align="right">35</td>
+<td align="right">9.405</td>
+<td align="right">88.450</td>
+<td align="right">14</td>
+<td align="right">48</td>
+<td align="right">758</td>
+</tr>
+<tr class="even">
+<td align="left">rhizosolenia_robusta</td>
+<td align="left">4</td>
+<td align="right">29.625</td>
+<td align="right">30</td>
+<td align="right">10.210</td>
+<td align="right">104.245</td>
+<td align="right">7</td>
+<td align="right">47</td>
+<td align="right">711</td>
+</tr>
+<tr class="odd">
+<td align="left">rhizosolenia_robusta</td>
+<td align="left">5</td>
+<td align="right">34.458</td>
+<td align="right">35</td>
+<td align="right">11.703</td>
+<td align="right">136.955</td>
+<td align="right">13</td>
+<td align="right">58</td>
+<td align="right">827</td>
+</tr>
+<tr class="even">
+<td align="left">rhizosolenia_robusta</td>
+<td align="left">6</td>
+<td align="right">34.083</td>
+<td align="right">34</td>
+<td align="right">13.266</td>
+<td align="right">175.993</td>
+<td align="right">13</td>
+<td align="right">69</td>
+<td align="right">818</td>
+</tr>
+<tr class="odd">
+<td align="left">rhizosolenia_robusta</td>
+<td align="left">7</td>
+<td align="right">30.000</td>
+<td align="right">28</td>
+<td align="right">9.283</td>
+<td align="right">86.174</td>
+<td align="right">18</td>
+<td align="right">49</td>
+<td align="right">720</td>
+</tr>
+<tr class="even">
+<td align="left">rhizosolenia_robusta</td>
+<td align="left">8</td>
+<td align="right">29.417</td>
+<td align="right">27</td>
+<td align="right">11.375</td>
+<td align="right">129.384</td>
+<td align="right">11</td>
+<td align="right">52</td>
+<td align="right">706</td>
+</tr>
+<tr class="odd">
+<td align="left">rhizosolenia_robusta</td>
+<td align="left">9</td>
+<td align="right">33.250</td>
+<td align="right">35</td>
+<td align="right">9.312</td>
+<td align="right">86.717</td>
+<td align="right">13</td>
+<td align="right">48</td>
+<td align="right">798</td>
+</tr>
+<tr class="even">
+<td align="left">rhizosolenia_robusta</td>
+<td align="left">10</td>
+<td align="right">32.458</td>
+<td align="right">32</td>
+<td align="right">10.566</td>
+<td align="right">111.650</td>
+<td align="right">16</td>
+<td align="right">59</td>
+<td align="right">779</td>
+</tr>
+<tr class="odd">
+<td align="left">rhizosolenia_robusta</td>
+<td align="left">11</td>
+<td align="right">40.542</td>
+<td align="right">40</td>
+<td align="right">12.639</td>
+<td align="right">159.737</td>
+<td align="right">10</td>
+<td align="right">66</td>
+<td align="right">973</td>
+</tr>
+<tr class="even">
+<td align="left">rhizosolenia_robusta</td>
+<td align="left">12</td>
+<td align="right">38.417</td>
+<td align="right">40</td>
+<td align="right">12.826</td>
+<td align="right">164.514</td>
+<td align="right">8</td>
+<td align="right">64</td>
+<td align="right">922</td>
+</tr>
+<tr class="odd">
+<td align="left">rhizosolenia_robusta</td>
+<td align="left">13</td>
+<td align="right">42.500</td>
+<td align="right">40</td>
+<td align="right">13.240</td>
+<td align="right">175.304</td>
+<td align="right">14</td>
+<td align="right">87</td>
+<td align="right">1020</td>
+</tr>
+<tr class="even">
+<td align="left">rhizosolenia_robusta</td>
+<td align="left">14</td>
+<td align="right">42.500</td>
+<td align="right">40</td>
+<td align="right">13.204</td>
+<td align="right">174.348</td>
+<td align="right">22</td>
+<td align="right">73</td>
+<td align="right">1020</td>
+</tr>
+<tr class="odd">
+<td align="left">rhizosolenia_robusta</td>
+<td align="left">15</td>
+<td align="right">44.833</td>
+<td align="right">42</td>
+<td align="right">12.980</td>
+<td align="right">168.493</td>
+<td align="right">23</td>
+<td align="right">72</td>
+<td align="right">1076</td>
+</tr>
+<tr class="even">
+<td align="left">rhizosolenia_robusta</td>
+<td align="left">16</td>
+<td align="right">92.250</td>
+<td align="right">76</td>
+<td align="right">57.776</td>
+<td align="right">3338.109</td>
+<td align="right">23</td>
+<td align="right">255</td>
+<td align="right">2214</td>
+</tr>
+<tr class="odd">
+<td align="left">rhizosolenia_robusta</td>
+<td align="left">17</td>
+<td align="right">70.000</td>
+<td align="right">69</td>
+<td align="right">19.460</td>
+<td align="right">378.696</td>
+<td align="right">43</td>
+<td align="right">117</td>
+<td align="right">1680</td>
+</tr>
+<tr class="even">
+<td align="left">rhizosolenia_robusta</td>
+<td align="left">18</td>
+<td align="right">65.250</td>
+<td align="right">66</td>
+<td align="right">14.441</td>
+<td align="right">208.543</td>
+<td align="right">44</td>
+<td align="right">98</td>
+<td align="right">1566</td>
+</tr>
+<tr class="odd">
+<td align="left">rhizosolenia_robusta</td>
+<td align="left">19</td>
+<td align="right">73.500</td>
+<td align="right">72</td>
+<td align="right">14.885</td>
+<td align="right">221.565</td>
+<td align="right">47</td>
+<td align="right">120</td>
+<td align="right">1764</td>
+</tr>
+<tr class="even">
+<td align="left">rhizosolenia_robusta</td>
+<td align="left">20</td>
+<td align="right">72.583</td>
+<td align="right">71</td>
+<td align="right">8.963</td>
+<td align="right">80.341</td>
+<td align="right">54</td>
+<td align="right">87</td>
+<td align="right">1742</td>
+</tr>
+<tr class="odd">
+<td align="left">rhizosolenia_robusta</td>
+<td align="left">21</td>
+<td align="right">60.125</td>
+<td align="right">60</td>
+<td align="right">19.016</td>
+<td align="right">361.592</td>
+<td align="right">30</td>
+<td align="right">89</td>
+<td align="right">1443</td>
+</tr>
+<tr class="even">
+<td align="left">rhizosolenia_robusta</td>
+<td align="left">22</td>
+<td align="right">52.583</td>
+<td align="right">57</td>
+<td align="right">15.959</td>
+<td align="right">254.688</td>
+<td align="right">20</td>
+<td align="right">78</td>
+<td align="right">1262</td>
+</tr>
+<tr class="odd">
+<td align="left">rhizosolenia_robusta</td>
+<td align="left">23</td>
+<td align="right">56.417</td>
+<td align="right">53</td>
+<td align="right">16.526</td>
+<td align="right">273.123</td>
+<td align="right">26</td>
+<td align="right">88</td>
+<td align="right">1354</td>
+</tr>
+<tr class="even">
+<td align="left">rhizosolenia_robusta</td>
+<td align="left">24</td>
+<td align="right">58.625</td>
+<td align="right">56</td>
+<td align="right">17.468</td>
+<td align="right">305.114</td>
+<td align="right">25</td>
+<td align="right">87</td>
+<td align="right">1407</td>
+</tr>
+<tr class="odd">
+<td align="left">rhizosolenia_robusta</td>
+<td align="left">25</td>
+<td align="right">56.708</td>
+<td align="right">60</td>
+<td align="right">13.017</td>
+<td align="right">169.433</td>
+<td align="right">32</td>
+<td align="right">79</td>
+<td align="right">1361</td>
+</tr>
+<tr class="even">
+<td align="left">rhizosolenia_robusta</td>
+<td align="left">26</td>
+<td align="right">56.583</td>
+<td align="right">52</td>
+<td align="right">20.932</td>
+<td align="right">438.167</td>
+<td align="right">21</td>
+<td align="right">101</td>
+<td align="right">1358</td>
+</tr>
+<tr class="odd">
+<td align="left">rhizosolenia_robusta</td>
+<td align="left">27</td>
+<td align="right">70.875</td>
+<td align="right">62</td>
+<td align="right">38.628</td>
+<td align="right">1492.114</td>
+<td align="right">42</td>
+<td align="right">231</td>
+<td align="right">1701</td>
+</tr>
+<tr class="even">
+<td align="left">rhizosolenia_robusta</td>
+<td align="left">28</td>
+<td align="right">54.458</td>
+<td align="right">50</td>
+<td align="right">14.554</td>
+<td align="right">211.824</td>
+<td align="right">32</td>
+<td align="right">85</td>
+<td align="right">1307</td>
+</tr>
+<tr class="odd">
+<td align="left">rhizosolenia_robusta</td>
+<td align="left">29</td>
+<td align="right">57.542</td>
+<td align="right">52</td>
+<td align="right">19.996</td>
+<td align="right">399.824</td>
+<td align="right">29</td>
+<td align="right">103</td>
+<td align="right">1381</td>
+</tr>
+<tr class="even">
+<td align="left">rhizosolenia_robusta</td>
+<td align="left">30</td>
+<td align="right">51.625</td>
+<td align="right">48</td>
+<td align="right">16.046</td>
+<td align="right">257.462</td>
+<td align="right">23</td>
+<td align="right">79</td>
+<td align="right">1239</td>
+</tr>
+<tr class="odd">
+<td align="left">sombra</td>
+<td align="left">1</td>
+<td align="right">127.200</td>
+<td align="right">110</td>
+<td align="right">57.320</td>
+<td align="right">3285.583</td>
+<td align="right">45</td>
+<td align="right">268</td>
+<td align="right">3180</td>
+</tr>
+<tr class="even">
+<td align="left">sombra</td>
+<td align="left">2</td>
+<td align="right">147.208</td>
+<td align="right">121</td>
+<td align="right">88.994</td>
+<td align="right">7919.911</td>
+<td align="right">19</td>
+<td align="right">336</td>
+<td align="right">3533</td>
+</tr>
+<tr class="odd">
+<td align="left">sombra</td>
+<td align="left">3</td>
+<td align="right">74.409</td>
+<td align="right">80</td>
+<td align="right">24.488</td>
+<td align="right">599.682</td>
+<td align="right">34</td>
+<td align="right">113</td>
+<td align="right">1637</td>
+</tr>
+<tr class="even">
+<td align="left">sombra</td>
+<td align="left">4</td>
+<td align="right">99.583</td>
+<td align="right">85</td>
+<td align="right">46.259</td>
+<td align="right">2139.906</td>
+<td align="right">30</td>
+<td align="right">168</td>
+<td align="right">2390</td>
+</tr>
+<tr class="odd">
+<td align="left">sombra</td>
+<td align="left">5</td>
+<td align="right">100.083</td>
+<td align="right">100</td>
+<td align="right">48.518</td>
+<td align="right">2353.993</td>
+<td align="right">27</td>
+<td align="right">191</td>
+<td align="right">2402</td>
+</tr>
+<tr class="even">
+<td align="left">sombra</td>
+<td align="left">6</td>
+<td align="right">169.750</td>
+<td align="right">138</td>
+<td align="right">108.449</td>
+<td align="right">11761.152</td>
+<td align="right">38</td>
+<td align="right">408</td>
+<td align="right">4074</td>
+</tr>
+<tr class="odd">
+<td align="left">sombra</td>
+<td align="left">7</td>
+<td align="right">166.875</td>
+<td align="right">170</td>
+<td align="right">47.772</td>
+<td align="right">2282.201</td>
+<td align="right">89</td>
+<td align="right">246</td>
+<td align="right">4005</td>
+</tr>
+<tr class="even">
+<td align="left">sombra</td>
+<td align="left">8</td>
+<td align="right">123.333</td>
+<td align="right">133</td>
+<td align="right">53.380</td>
+<td align="right">2849.449</td>
+<td align="right">31</td>
+<td align="right">200</td>
+<td align="right">2960</td>
+</tr>
+<tr class="odd">
+<td align="left">sombra</td>
+<td align="left">9</td>
+<td align="right">96.208</td>
+<td align="right">92</td>
+<td align="right">38.175</td>
+<td align="right">1457.303</td>
+<td align="right">24</td>
+<td align="right">193</td>
+<td align="right">2309</td>
+</tr>
+<tr class="even">
+<td align="left">sombra</td>
+<td align="left">10</td>
+<td align="right">88.458</td>
+<td align="right">88</td>
+<td align="right">27.187</td>
+<td align="right">739.129</td>
+<td align="right">31</td>
+<td align="right">139</td>
+<td align="right">2123</td>
+</tr>
+<tr class="odd">
+<td align="left">sombra</td>
+<td align="left">11</td>
+<td align="right">104.208</td>
+<td align="right">100</td>
+<td align="right">35.483</td>
+<td align="right">1259.042</td>
+<td align="right">31</td>
+<td align="right">193</td>
+<td align="right">2501</td>
+</tr>
+<tr class="even">
+<td align="left">sombra</td>
+<td align="left">12</td>
+<td align="right">139.958</td>
+<td align="right">133</td>
+<td align="right">45.100</td>
+<td align="right">2034.042</td>
+<td align="right">48</td>
+<td align="right">227</td>
+<td align="right">3359</td>
+</tr>
+<tr class="odd">
+<td align="left">sombra</td>
+<td align="left">13</td>
+<td align="right">181.625</td>
+<td align="right">170</td>
+<td align="right">56.522</td>
+<td align="right">3194.766</td>
+<td align="right">104</td>
+<td align="right">307</td>
+<td align="right">4359</td>
+</tr>
+<tr class="even">
+<td align="left">sombra</td>
+<td align="left">14</td>
+<td align="right">235.292</td>
+<td align="right">216</td>
+<td align="right">103.041</td>
+<td align="right">10617.433</td>
+<td align="right">75</td>
+<td align="right">476</td>
+<td align="right">5647</td>
+</tr>
+<tr class="odd">
+<td align="left">sombra</td>
+<td align="left">15</td>
+<td align="right">224.125</td>
+<td align="right">226</td>
+<td align="right">110.634</td>
+<td align="right">12239.940</td>
+<td align="right">60</td>
+<td align="right">393</td>
+<td align="right">5379</td>
+</tr>
+<tr class="even">
+<td align="left">sombra</td>
+<td align="left">16</td>
+<td align="right">241.458</td>
+<td align="right">214</td>
+<td align="right">131.640</td>
+<td align="right">17329.042</td>
+<td align="right">69</td>
+<td align="right">648</td>
+<td align="right">5795</td>
+</tr>
+<tr class="odd">
+<td align="left">sombra</td>
+<td align="left">17</td>
+<td align="right">309.125</td>
+<td align="right">306</td>
+<td align="right">56.486</td>
+<td align="right">3190.723</td>
+<td align="right">211</td>
+<td align="right">427</td>
+<td align="right">7419</td>
+</tr>
+<tr class="even">
+<td align="left">sombra</td>
+<td align="left">18</td>
+<td align="right">376.917</td>
+<td align="right">328</td>
+<td align="right">136.774</td>
+<td align="right">18707.123</td>
+<td align="right">249</td>
+<td align="right">699</td>
+<td align="right">9046</td>
+</tr>
+<tr class="odd">
+<td align="left">sombra</td>
+<td align="left">19</td>
+<td align="right">537.333</td>
+<td align="right">536</td>
+<td align="right">106.252</td>
+<td align="right">11289.449</td>
+<td align="right">358</td>
+<td align="right">768</td>
+<td align="right">12896</td>
+</tr>
+<tr class="even">
+<td align="left">sombra</td>
+<td align="left">20</td>
+<td align="right">745.708</td>
+<td align="right">741</td>
+<td align="right">129.995</td>
+<td align="right">16898.824</td>
+<td align="right">488</td>
+<td align="right">1005</td>
+<td align="right">17897</td>
+</tr>
+<tr class="odd">
+<td align="left">sombra</td>
+<td align="left">21</td>
+<td align="right">516.125</td>
+<td align="right">415</td>
+<td align="right">354.173</td>
+<td align="right">125438.810</td>
+<td align="right">65</td>
+<td align="right">1187</td>
+<td align="right">12387</td>
+</tr>
+<tr class="even">
+<td align="left">sombra</td>
+<td align="left">22</td>
+<td align="right">176.417</td>
+<td align="right">154</td>
+<td align="right">118.095</td>
+<td align="right">13946.428</td>
+<td align="right">44</td>
+<td align="right">577</td>
+<td align="right">4234</td>
+</tr>
+<tr class="odd">
+<td align="left">sombra</td>
+<td align="left">23</td>
+<td align="right">233.542</td>
+<td align="right">204</td>
+<td align="right">110.165</td>
+<td align="right">12136.259</td>
+<td align="right">94</td>
+<td align="right">497</td>
+<td align="right">5605</td>
+</tr>
+<tr class="even">
+<td align="left">sombra</td>
+<td align="left">24</td>
+<td align="right">325.583</td>
+<td align="right">308</td>
+<td align="right">159.619</td>
+<td align="right">25478.080</td>
+<td align="right">113</td>
+<td align="right">732</td>
+<td align="right">7814</td>
+</tr>
+<tr class="odd">
+<td align="left">sombra</td>
+<td align="left">25</td>
+<td align="right">257.875</td>
+<td align="right">256</td>
+<td align="right">100.025</td>
+<td align="right">10005.071</td>
+<td align="right">124</td>
+<td align="right">496</td>
+<td align="right">6189</td>
+</tr>
+<tr class="even">
+<td align="left">sombra</td>
+<td align="left">26</td>
+<td align="right">369.375</td>
+<td align="right">324</td>
+<td align="right">190.988</td>
+<td align="right">36476.592</td>
+<td align="right">147</td>
+<td align="right">844</td>
+<td align="right">8865</td>
+</tr>
+<tr class="odd">
+<td align="left">sombra</td>
+<td align="left">27</td>
+<td align="right">519.583</td>
+<td align="right">452</td>
+<td align="right">245.233</td>
+<td align="right">60139.384</td>
+<td align="right">197</td>
+<td align="right">971</td>
+<td align="right">12470</td>
+</tr>
+<tr class="even">
+<td align="left">sombra</td>
+<td align="left">28</td>
+<td align="right">486.917</td>
+<td align="right">427</td>
+<td align="right">174.469</td>
+<td align="right">30439.558</td>
+<td align="right">243</td>
+<td align="right">914</td>
+<td align="right">11686</td>
+</tr>
+<tr class="odd">
+<td align="left">sombra</td>
+<td align="left">29</td>
+<td align="right">510.167</td>
+<td align="right">474</td>
+<td align="right">182.830</td>
+<td align="right">33426.928</td>
+<td align="right">261</td>
+<td align="right">880</td>
+<td align="right">12244</td>
+</tr>
+<tr class="even">
+<td align="left">sombra</td>
+<td align="left">30</td>
+<td align="right">267.667</td>
+<td align="right">294</td>
+<td align="right">87.054</td>
+<td align="right">7578.406</td>
+<td align="right">126</td>
+<td align="right">417</td>
+<td align="right">6424</td>
+</tr>
+</tbody>
+</table>
 <pre class="r"><code>plot_summary &lt;- function(classe = df_full$chaetoceros, 
                          ylab = &quot;Total Chaetoceros/hour&quot;,
                          xlab = &quot;Date&quot;,
@@ -1742,17 +4738,13 @@ classes.</p>
          title = toupper(titulo)) +
     theme_test() +
     theme(axis.text.x = element_text(size = 15, face = &quot;bold&quot;,
-                                     family = &quot;Times New Roman&quot;,
                                      angle = 45, hjust = 1,
                                      vjust = 1, color = &quot;black&quot;),
           axis.text.y = element_text(size = 15, face = &quot;bold&quot;,
-                                     family = &quot;Times New Roman&quot;,
                                      color = &quot;black&quot;),
           axis.title.x = element_text(size = 16, face = &quot;bold&quot;,
-                                      family = &quot;Times New Roman&quot;,
                                       color = &quot;black&quot;),
           axis.title.y = element_text(size = 16, face = &quot;bold&quot;,
-                                      family = &quot;Times New Roman&quot;,
                                       color = &quot;black&quot;))
   
 }
@@ -1771,20 +4763,21 @@ plot_summary()</code></pre>
 ##  [9] &quot;rhizosolenia_robusta&quot;          &quot;sombra&quot;</code></pre>
 <pre class="r"><code># Cria dataframe com a classe especificada
 df_classe &lt;- df_full %&gt;% 
-  select(cycle_rounded, chaetoceros)
+  dplyr::filter()
 
 # Preenche NA&#39;s com o último valor observado - análise espectral não funciona com NA
 # Há inúmeras formas de preencher esses NA&#39;s, essa é a mais simples
 df_classe &lt;- df_classe %&gt;% 
   tidyr::fill(chaetoceros, .direction = &quot;down&quot;)
 
-# Espectro com remoção da tendência
+# Espectro com remoção da tendência - span consiste em suavização do espectro
 resultado &lt;- spectrum(I(df_classe$chaetoceros - mean(df_classe$chaetoceros)),
                       span = c(3, 3, 3, 3), 
-                      log = c(&quot;no&quot;), plot = F)
+                      log = c(&quot;no&quot;),
+                      plot = F)
 
 # Extração das frequências em uHz (X) e da variância do espectro (Y)
-x &lt;- resultado$freq / (3.6/1000)
+x &lt;- resultado$freq / (3.6 / 1000)
 y &lt;- 2 * resultado$spec
 
 # Plot
@@ -1795,19 +4788,14 @@ ggplot() +
   labs(x = &quot;Frequency uHz&quot;) +
   theme_test() +
   theme(axis.text.x = element_text(size = 12, face = &quot;bold&quot;, 
-                                   family = &quot;Times New Roman&quot;,
                                    color = &quot;black&quot;),
         axis.text.y = element_text(size = 12, face = &quot;bold&quot;, 
-                                   family = &quot;Times New Roman&quot;,
                                    color = &quot;black&quot;),
         axis.title.x = element_text(size = 16, face = &quot;bold&quot;,
-                                    family = &quot;Times New Roman&quot;,
                                     color = &quot;black&quot;),
         axis.title.y = element_text(size = 16, face = &quot;bold&quot;,
-                                    family = &quot;Times New Roman&quot;,
                                     color = &quot;black&quot;), 
         strip.text = element_text(size = 14, face = &quot;bold&quot;, 
-                                  family = &quot;Times New Roman&quot;,
                                   color = &quot;black&quot;))</code></pre>
 <p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABUAAAAPACAMAAADDuCPrAAAAvVBMVEUAAAAAADoAAGYAOjoAOmYAOpAAZmYAZrYzMzM6AAA6ADo6OgA6Ojo6OmY6ZmY6ZpA6ZrY6kJA6kLY6kNtmAABmOgBmOjpmZjpmZpBmkJBmkLZmkNtmtrZmtttmtv+QOgCQZgCQZjqQkGaQttuQ29uQ2/+2ZgC2Zjq2kDq2kGa2kJC2tra2ttu229u22/+2///bkDrbkGbbtmbbtpDb27bb29vb2//b////tmb/25D/27b/29v//7b//9v///+Ei2TAAAAACXBIWXMAAB2HAAAdhwGP5fFlAAAgAElEQVR4nO3dfYPa5prYYSZx6p0mWbvrJGc3rec0m82cpO060/g0dnxivv/HqoUAvb/dSOgBruufeDQgbhj4RQIBmy0AIZu1BwC4VAIKECSgAEECChAkoABBAgoQJKAAQQIKECSgAEECChAkoABBAgoQJKAAQRcS0H8CSEC1TJcS0LUHANgKKECQgAIECShAkIACBAkoQJCAAgQJKECQgAIECShAkIACBAkoQJCAAgQJKECQgAIECShAkIACBAkoQJCAAgQJKECQgAIECShAkIACBAkoQJCAAgQJKECQgAIECShAkIACBAkoQJCAAgQJKECQgAIECShAkIACBAkoQNDtBHRzIVcNuBg3E9BNZoFJgNsloABBAgoQJKAAQQIKECSgAEECChAkoABBAgoQJKAAQQIKECSgAEECChAkoABBAgoQdDMBVVBgbgIKECSgAEECChAkoABBAgoQJKAAQQIKECSgAEECChAkoABBAgoQJKAAQQIKECSgAEECChAkoABBAgoQJKAAQQIKECSgAEECChAkoABBAgoQJKAAQQIKECSgAEECChC0REDffnf/qVVf//juuOTDD5+W3L38fXvikmLswFgKCsxr/oB++Haz9+yn/aKn/YK719uTlpTGDgwmoMC8Zg/oH/ebo7u8oE/FkoftCUvKYwcmE1BgXnMH9ONfNyVfZHvx5aR+9us2vKQydmA0AQXmNXdAd9179ma7fXt/2AR9zML1evvx5+y/r7bhJZWxA6MJKDCvuQP6dNxzf7/f+f7zm3ITs23S2JLq2IHRBBSY19wB/e2rr+7z3B0SmG2TFknN9sZjS6pjB0YTUGBeyx0HugvoQzmAhyjG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" width="672" /></p>
 </div>
